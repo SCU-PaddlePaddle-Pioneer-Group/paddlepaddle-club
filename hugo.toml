@@ -1,7 +1,6 @@
 baseURL = 'https://example.github.io/paddlepaddle-club/'
 languageCode = 'zh-cn'
 title = 'PADDLEPADDLE CLUB'
-theme = ''
 defaultContentLanguage = 'zh'
 enableRobotsTXT = true
 
