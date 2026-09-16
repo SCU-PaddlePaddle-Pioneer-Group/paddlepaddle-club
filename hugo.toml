@@ -1,0 +1,16 @@
+baseURL = 'https://example.github.io/paddlepaddle-club/'
+languageCode = 'zh-cn'
+title = 'PADDLEPADDLE CLUB'
+theme = ''
+defaultContentLanguage = 'zh'
+enableRobotsTXT = true
+
+[params]
+  description = 'PaddlePaddle Club · 用技术连接想法，用开源推动成长。'
+  author = 'PaddlePaddle Club'
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+
