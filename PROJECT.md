@@ -1,6 +1,6 @@
 # PaddlePaddle Club — 项目文档
 
-> 版本：v2.5　·　状态：代码已清空，功能全部待实现　·　最近更新：2026-09
+> 版本：v2.6　·　状态：代码已清空，功能全部待实现　·　最近更新：2026-09
 
 ---
 
@@ -67,7 +67,7 @@ PaddlePaddle Club 是社团的**技术社团官网**，基于 Hugo 构建的纯�
 | --- | --- | --- | --- | --- |
 | `title` | 是 | string | 帖子标题 | `从零开始的 Paddle 深度学习` |
 | `date` | 是 | string | 日期（ISO `YYYY-MM-DD`），用于时间倒序排序 | `2024-09-06` |
-| `kind` | 是 | string | 帖子类型：`project`（项目）/ `event`（活动）。⚠️ 不用 `type`（Hugo 保留键，会覆盖页面类型） | `event` |
+| `postKind` | 是 | string | 帖子类型：`project`（项目）/ `event`（活动）。⚠️ 不用 `kind` / `type`（均为 Hugo 保留键，会覆盖页面类型） | `event` |
 | `summary` | 是 | string | 卡片摘要，展示在帖子流中 | `面向初学者的深度学习工作坊` |
 | `slug` | 否 | string | URL 唯一标识；缺省时由文件名生成 | `paddle-workshop` |
 
@@ -77,7 +77,7 @@ PaddlePaddle Club 是社团的**技术社团官网**，基于 Hugo 构建的纯�
 ---
 title: "从零开始的 Paddle 深度学习"
 date: 2024-09-06
-kind: event
+postKind: event
 summary: "从初学者的 Paddle 深度学习工作坊"
 slug: "paddle-workshop"
 ---
@@ -88,9 +88,9 @@ slug: "paddle-workshop"
 **约定规则**：
 
 - 排序：帖子按 `date` **时间倒序**渲染，最新在前。
-- 类型：`kind` 决定标签文案与配色（`project` / `event`）。
+- 类型：`postKind` 决定标签文案与配色（`project` / `event`）。
 - 跳转：帖子详情链接为 `/posts/<slug>/`。
-- 导出：A 的 JSON 导出模板据此输出 `title / type / date / summary / slug` 字段（JSON 中的 `type` 由 front matter 的 `kind` 提供）。
+- 导出：A 的 JSON 导出模板据此输出 `title / type / date / summary / slug` 字段（JSON 中的 `type` 由 front matter 的 `postKind` 提供）。
 
 ---
 
@@ -150,7 +150,7 @@ slug: "paddle-workshop"
 | 字段 | 类型 | 来源 | 说明 |
 | --- | --- | --- | --- |
 | `title` | string | front matter `title` | 帖子标题 |
-| `type` | string | front matter `kind` | `project` / `event`（JSON 字段名保留 `type`，取 front matter 的 `kind`） |
+| `type` | string | front matter `postKind` | `project` / `event`（JSON 字段名保留 `type`，取 front matter 的 `postKind`） |
 | `date` | string | front matter `date` | ISO `YYYY-MM-DD` |
 | `summary` | string | front matter `summary` | 卡片摘要 |
 | `slug` | string | front matter `slug` 或文件名 | URL 标识 |

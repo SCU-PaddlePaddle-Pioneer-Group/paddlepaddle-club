@@ -6,7 +6,7 @@
   {{- if not $slug }}{{ $slug = .File.BaseFileName }}{{ end -}}
   {{- $item := dict
         "title" .Title
-        "type" (default "" .Params.kind)
+        "type" (default "" .Params.postKind)
         "date" (.Date.Format "2006-01-02")
         "summary" (default "" .Params.summary)
         "slug" $slug

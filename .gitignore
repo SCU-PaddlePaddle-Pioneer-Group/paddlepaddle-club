@@ -1,0 +1,21 @@
+# ===== Hugo 构建产物与缓存 =====
+# 构建产物目录（CI 构建时重新生成，无需提交）
+/public/
+# Hugo 资源缓存
+/resources/_gen/
+/resources/cache/
+# 本地构建锁文件
+.hugo_build.lock
+
+# ===== 系统文件 =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== 编辑器 / IDE =====
+.vscode/
+.idea/
+
+# ===== 日志与临时文件 =====
+*.log
+*.tmp
