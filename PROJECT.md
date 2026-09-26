@@ -1,6 +1,6 @@
 # PaddlePaddle Club — 项目文档
 
-> 版本：v2.0　·　状态：代码已清空，功能全部待实现　·　最近更新：2026-09
+> 版本：v2.5　·　状态：代码已清空，功能全部待实现　·　最近更新：2026-09
 
 ---
 
@@ -56,6 +56,187 @@ PaddlePaddle Club 是社团的**技术社团官网**，基于 Hugo 构建的纯�
 ### 2.4 范围边界
 
 - 所有内容为静态展示，不处理用户提交与交互逻辑。
+
+---
+
+### 2.5 帖子 Front Matter 规范
+
+> 动态帖子流（发推文）的数据规范，供 **D（内容）** 编写、**A（JSON 导出模板）** 解析、**E（渲染）** 消费。字段名一经确定不再改动。
+
+| 字段 | 必填 | 类型 | 说明 | 示例 |
+| --- | --- | --- | --- | --- |
+| `title` | 是 | string | 帖子标题 | `从零开始的 Paddle 深度学习` |
+| `date` | 是 | string | 日期（ISO `YYYY-MM-DD`），用于时间倒序排序 | `2024-09-06` |
+| `kind` | 是 | string | 帖子类型：`project`（项目）/ `event`（活动）。⚠️ 不用 `type`（Hugo 保留键，会覆盖页面类型） | `event` |
+| `summary` | 是 | string | 卡片摘要，展示在帖子流中 | `面向初学者的深度学习工作坊` |
+| `slug` | 否 | string | URL 唯一标识；缺省时由文件名生成 | `paddle-workshop` |
+
+**示例文件** `content/posts/paddle-workshop.md`：
+
+```yaml
+---
+title: "从零开始的 Paddle 深度学习"
+date: 2024-09-06
+kind: event
+summary: "从初学者的 Paddle 深度学习工作坊"
+slug: "paddle-workshop"
+---
+支持markdown格式
+（正文内容）
+```
+
+**约定规则**：
+
+- 排序：帖子按 `date` **时间倒序**渲染，最新在前。
+- 类型：`kind` 决定标签文案与配色（`project` / `event`）。
+- 跳转：帖子详情链接为 `/posts/<slug>/`。
+- 导出：A 的 JSON 导出模板据此输出 `title / type / date / summary / slug` 字段（JSON 中的 `type` 由 front matter 的 `kind` 提供）。
+
+---
+
+### 2.6 CSS 变量命名规范
+
+> 供 **C（样式）** 使用。以「语义」命名、不硬编码色值；变量一经定义不再改动。
+
+**命名规则**
+
+- 统一 `--` 前缀，小写，多词用 `-` 连接（如 `--ink-soft`）。
+- 按类别分组：色板（color）、字体（type）、布局（layout）。
+- 全站不出现硬编码色值，颜色一律通过 `var(--x)` 引用。
+
+**色板变量**
+
+| 变量 | 值 | 用途 |
+| --- | --- | --- |
+| `--ink` | `#07111f` | 深蓝主底 |
+| `--ink-soft` | `#0d1d31` | 次深底（次级区块） |
+| `--paper` | `#edf2ec` | 浅色底（浅色区块） |
+| `--muted` | `#9eacba` | 次要文字 |
+| `--acid` | `#cbff45` | 荧光绿 · 强调/CTA |
+| `--cyan` | `#5ce1e6` | 青 · 辅助/描边 |
+| `--line` | `rgba(237,242,236,.16)` | 分隔线 |
+
+**字体变量**
+
+| 变量 | 值 | 用途 |
+| --- | --- | --- |
+| `--display` | `'Space Grotesk', Arial, sans-serif` | 标题/正文显示字体 |
+| `--mono` | `'DM Mono', Consolas, monospace` | 代码/标签等宽字体 |
+
+**用法约定**
+
+- 颜色一律 `var(--x)`，禁止在区块内硬编码色值。
+- 派生色（透明度/暗化）基于语义色用 `rgba` / `color-mix()` 生成，不改主变量。
+- 动效只允许纯 CSS，不引入 JS 动画。
+
+---
+
+### 2.7 JSON 输出结构
+
+> A 的导出模板把 `content/posts/*.md` 在构建期输出为 `static/data/posts.json`，供 **E（nav.js）** 消费。字段名与嵌套结构一经确定不再改动。
+
+**顶层结构**
+
+```json
+{
+  "posts": [ { … }, { … } ]
+}
+```
+
+顶层为对象，含 `posts` 数组（便于日后扩展 `meta` 等顶层字段）。
+
+**单条帖子字段**
+
+| 字段 | 类型 | 来源 | 说明 |
+| --- | --- | --- | --- |
+| `title` | string | front matter `title` | 帖子标题 |
+| `type` | string | front matter `kind` | `project` / `event`（JSON 字段名保留 `type`，取 front matter 的 `kind`） |
+| `date` | string | front matter `date` | ISO `YYYY-MM-DD` |
+| `summary` | string | front matter `summary` | 卡片摘要 |
+| `slug` | string | front matter `slug` 或文件名 | URL 标识 |
+| `url` | string | 由 `slug` 拼接 | 详情跳转地址 `/posts/<slug>/` |
+
+**示例** `static/data/posts.json`
+
+```json
+{
+  "posts": [
+    {
+      "title": "从零开始的 Paddle 深度学习",
+      "type": "event",
+      "date": "2024-09-06",
+      "summary": "从初学者的 Paddle 深度学习工作坊",
+      "slug": "paddle-workshop",
+      "url": "/posts/paddle-workshop/"
+    }
+  ]
+}
+```
+
+**约定规则**
+
+- 排序：导出时按 `date` **时间倒序**输出（最新在前），E 可直接顺序渲染。
+- `url`：由导出模板拼接，E 直接使用，无需自行拼路径。
+- 字段缺失：`slug`/`url` 由模板生成；`title`/`type`/`date`/`summary` 缺失时该条视为无效帖子，可跳过。
+
+---
+
+### 2.8 页面锚点规范
+
+> 首页为单页结构，区块锚点用于导航跳转。供 **B（页面结构）** 定义 `id`、导航引用。锚点 id 一经确定不再改动。
+
+**首页锚点列表**
+
+| 锚点 | 区块 | 用途 |
+| --- | --- | --- |
+| `#top` | 页面顶部 | 返回顶部 / 页头 logo 链接 |
+| `#about` | 关于我们 | 社团宣言 + 核心数据 |
+| `#feed` | 动态帖子流 | 帖子流（E 用 JS 填充） |
+
+**使用约定**
+
+- 每个区块用 `<section id="about">`、`<section id="feed">`，`id` 与锚点一致。
+- 导航链接使用 `href="#about"`、`href="#feed"`。
+- `#feed` 容器**只由 E（JS）渲染填充**，B 只预留空容器、不写入帖子内容。
+- 锚点只做区块内定位；跨页跳转走帖子详情 `/posts/<slug>/`。
+
+---
+
+### 2.9 HTML class 命名规范
+
+> 供 **B（页面结构）** 定义 DOM、**C（样式）** 写 CSS、**E（JS）** 装配的公共 class 命名。一经确定不再改动。
+
+**命名规则**
+
+- 语义化，小写，多词用 `-` 连接（如 `section-pad`）。
+- 区块级 class 用于布局/定位（如 `hero`、`about`、`feed`）。
+- 组件级 class 用于内部元素（如 `post-card`、`post-type`）。
+- 状态修饰用 `is-` 前缀（如 `is-active`）。
+
+**首页区块 class 清单（B 定义）**
+
+| class | 元素 | 说明 |
+| --- | --- | --- |
+| `.hero` | 首屏 section | 首屏区块 |
+| `.section-pad` | 区块内层 | 区块内边距 |
+| `.grid-bg` | section | 点阵网格背景 |
+| `.stats-row` | 关于区块 | 核心数据行 |
+| `.feed` | 动态流容器 | E 填充帖子 |
+
+**帖子卡片 class（E/C 契约）**
+
+| class | 说明 |
+| --- | --- |
+| `.post-card` | 帖子卡片容器 |
+| `.post-type` | 类型标签（project/event） |
+| `.post-title` | 帖子标题 |
+| `.post-summary` | 摘要 |
+
+**使用约定**
+
+- B 只写结构并用上述 class；C 按这些 class 写样式；E 生成帖子 DOM 时复用 `.post-*` 类。
+- 不在 HTML 内联 style（例外：可访问性/语义必需时）。
+- 状态类如 `is-active` 只在 JS 控制时使用。
 
 ---
 
