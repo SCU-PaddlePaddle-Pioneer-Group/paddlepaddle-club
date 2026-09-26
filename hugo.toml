@@ -13,3 +13,13 @@ enableRobotsTXT = true
     [markup.goldmark.renderer]
       unsafe = true
 
+# home 同时输出 HTML 与 JSON（供 nav.js 读取帖子数据）
+[outputs]
+  home = ["html", "json"]
+
+[outputFormats]
+  [outputFormats.json]
+    mediaType = "application/json"
+    isPlainText = true
+    baseName = "index"
+

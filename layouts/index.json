@@ -1,0 +1,17 @@
+{{- /* 构建期把 content/posts/*.md 导出为 JSON，供 nav.js 读取。字段对齐 §2.7 契约。 */ -}}
+{{- $posts := (where .Site.RegularPages "Section" "posts").ByDate.Reverse -}}
+{{- $items := slice -}}
+{{- range $posts -}}
+  {{- $slug := .Params.slug -}}
+  {{- if not $slug }}{{ $slug = .File.BaseFileName }}{{ end -}}
+  {{- $item := dict
+        "title" .Title
+        "type" (default "" .Params.kind)
+        "date" (.Date.Format "2006-01-02")
+        "summary" (default "" .Params.summary)
+        "slug" $slug
+        "url" (printf "/posts/%s/" $slug)
+  -}}
+  {{- $items = $items | append $item -}}
+{{- end -}}
+{{ dict "posts" $items | jsonify }}
