@@ -1,0 +1,142 @@
+{{- define "main" -}}
+
+{{- /* ============================================================
+     首页单页结构：hero → about → feed（PROJECT.md §2.8）
+     静态文案走站点配置，动态帖子内容由 E（nav.js）填充 #feed。
+     ============================================================ */ -}}
+
+{{- /* ---------- 1. HERO：slogan + 纯 CSS 神经网络视觉 ---------- */ -}}
+<section class="hero grid-bg" aria-labelledby="hero-title">
+  <div class="section-pad hero-inner">
+
+    <div class="hero-copy">
+      <p class="hero-eyebrow">
+        <span>SICHUAN UNIVERSITY</span>
+        <span>{{ .Site.Params.heroEyebrow | default "PADDLEPADDLE PIONEER GROUP" }}</span>
+      </p>
+
+      <h1 id="hero-title" class="hero-title">
+        <span class="hero-title-line">{{ .Site.Params.slogan | default "让想法跑起来" }}</span>
+        <span class="hero-title-line hero-title-accent">{{ .Site.Params.sloganAccent | default "让学习真正发生" }}</span>
+      </h1>
+
+      <p class="hero-lede">
+        {{ .Site.Params.heroLede | default "四川大学飞桨领航团 · 面向全校同学的 AI 学习、技术实践与创新交流社区。我们以飞桨为起点，连接课程、代码、项目与真实问题。" }}
+      </p>
+
+      <p class="hero-actions">
+        <a class="btn-hero" href="{{ "#feed" | relURL }}">
+          <span>查看社团动态</span>
+          <span class="btn-arrow" aria-hidden="true">→</span>
+        </a>
+        {{ with .Site.Params.github }}
+        <a class="btn-ghost" href="{{ . }}" rel="noopener">GitHub 组织</a>
+        {{ end }}
+      </p>
+    </div>
+
+    {{- /* 神经网络视觉：纯 CSS，无动画帧、无 JS。轨道 × 2 / 核心 / 节点 × 4 / 脉冲 × 2 */ -}}
+    <div class="hero-visual" aria-hidden="true">
+      <div class="visual-stage">
+        <span class="visual-orbit visual-orbit-a"></span>
+        <span class="visual-orbit visual-orbit-b"></span>
+
+        <span class="visual-core"><span class="visual-core-mark">∞</span></span>
+
+        <span class="node node-1"><span class="pulse"></span></span>
+        <span class="node node-2"></span>
+        <span class="node node-3"><span class="pulse"></span></span>
+        <span class="node node-4"></span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+{{- /* ---------- 2. ABOUT：社团宣言 + 核心数据行 ---------- */ -}}
+<section class="about grid-bg" id="about" aria-labelledby="about-title">
+  <div class="section-pad">
+
+    <header class="section-head">
+      <p class="section-index" aria-hidden="true">01 / 关于我们</p>
+      <h2 id="about-title" class="section-title">{{ .Site.Params.aboutTitle | default "一起学 AI · 一起做项目 · 一起把想法变成现实" }}</h2>
+    </header>
+
+    <div class="manifesto">
+      <p class="manifesto-lead">
+        {{ .Site.Params.manifesto | default "四川大学飞桨领航团，是一个面向四川大学同学的 AI 学习、技术实践与创新交流社区。我们以飞桨为起点，连接课程、代码、项目与真实问题，让每一次学习都能沉淀为可复用的成果。" }}
+      </p>
+      <p class="manifesto-flow">
+        <span>好奇心</span><span class="flow-arrow" aria-hidden="true">→</span>
+        <span>学习基础</span><span class="flow-arrow" aria-hidden="true">→</span>
+        <span>动手实践</span><span class="flow-arrow" aria-hidden="true">→</span>
+        <span>团队协作</span><span class="flow-arrow" aria-hidden="true">→</span>
+        <span>开源分享</span><span class="flow-arrow" aria-hidden="true">→</span>
+        <span>持续迭代</span>
+      </p>
+    </div>
+
+    {{- /* 核心数据行：成员 / 项目 / 分享。数值来自 hugo.toml [params.stats]，
+           需与事实一致（Review 要点 §5.4）。缺失时回落为「—」。 */ -}}
+    {{- $stats := .Site.Params.stats | default dict }}
+    <dl class="stats-row">
+      <div class="stat">
+        <dt class="stat-label">在校成员</dt>
+        <dd class="stat-value">{{ index $stats "members" | default "—" }}</dd>
+      </div>
+      <div class="stat">
+        <dt class="stat-label">项目 / 实验</dt>
+        <dd class="stat-value">{{ index $stats "projects" | default "—" }}</dd>
+      </div>
+      <div class="stat">
+        <dt class="stat-label">技术分享</dt>
+        <dd class="stat-value">{{ index $stats "shares" | default "—" }}</dd>
+      </div>
+      <div class="stat">
+        <dt class="stat-label">覆盖方向</dt>
+        <dd class="stat-value">{{ index $stats "topics" | default "—" }}</dd>
+      </div>
+    </dl>
+
+  </div>
+</section>
+
+{{- /* ---------- 3. FEED：动态帖子流 ----------
+     B 只预留空容器，不写任何帖子内容；E（nav.js）读取 posts JSON 后填充。 */ -}}
+<section class="feed grid-bg" id="feed" aria-labelledby="feed-title">
+  <div class="section-pad">
+
+    <header class="section-head">
+      <p class="section-index" aria-hidden="true">02 / 动态</p>
+      <h2 id="feed-title" class="section-title">社团动态</h2>
+      <p class="section-desc">项目与活动合并为统一帖子流，按时间倒序展示，用类型标签区分。</p>
+    </header>
+
+    {{- /* data-posts-endpoint：layouts/index.json 构建期导出的 JSON 地址。
+           E 读取该属性 fetch，不硬编码路径，保证子路径部署（GitHub Pages）下可用。 */ -}}
+    {{- $endpoint := "index.json" }}
+    {{- with .Site.Home.OutputFormats.Get "json" }}{{ $endpoint = .RelPermalink }}{{ end }}
+    <div class="feed" id="post-feed" data-posts-endpoint="{{ $endpoint }}">
+
+      {{- /* 加载态占位：nav.js 渲染前显示；渲染后由 JS 移除 .is-loading。 */ -}}
+      <ul class="feed-list is-loading" aria-busy="true">
+        <li class="feed-placeholder">正在加载动态…</li>
+      </ul>
+
+      {{- /* 状态区：加载失败 / 暂无内容时由 nav.js 写入文案并移除 hidden 属性。 */ -}}
+      <p class="feed-status" data-feed-status hidden></p>
+
+      {{- /* 无 JS 兜底：直接给出构建期聚合入口，保证内容可达（渐进增强）。 */ -}}
+      <noscript>
+        <p class="feed-noscript">
+          帖子流需要 JavaScript 加载。你也可以前往
+          <a href="{{ "posts/" | relURL }}">动态列表</a>。
+        </p>
+      </noscript>
+
+    </div>
+
+  </div>
+</section>
+
+{{- end -}}

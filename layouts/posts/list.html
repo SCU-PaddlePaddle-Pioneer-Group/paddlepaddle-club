@@ -1,0 +1,42 @@
+{{- define "main" -}}
+
+{{- /* 帖子列表页 /posts/：构建期由 Hugo 直接渲染全部帖子，作为 #feed 动态流的
+      无 JS 兜底入口（首页 noscript 指向此页）。样式复用首页 .post-* 卡片契约。 */ -}}
+{{- $posts := (where .Site.RegularPages "Section" "posts").ByDate.Reverse -}}
+
+<section class="post-list grid-bg" aria-labelledby="post-list-title">
+  <div class="section-pad">
+
+    <header class="section-head">
+      <p class="section-index" aria-hidden="true">动态</p>
+      <h1 id="post-list-title" class="section-title">社团动态</h1>
+      <p class="section-desc">项目与活动合并为统一帖子流，按时间倒序展示，用类型标签区分。</p>
+    </header>
+
+    {{- if $posts }}
+    <ul class="feed-list">
+      {{- range $posts }}
+      {{- $kind := .Params.postKind | default "" }}
+      {{- $kindLabel := cond (eq $kind "project") "项目" (cond (eq $kind "event") "活动" $kind) }}
+      <li>
+        <a class="post-card" href="{{ .RelPermalink }}">
+          <p class="post-meta">
+            {{ with $kindLabel }}<span class="post-type is-{{ $kind }}">{{ . }}</span>{{ end }}
+            <time class="post-date" datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006 年 1 月 2 日" }}</time>
+          </p>
+          <h2 class="post-title">{{ .Title }}</h2>
+          {{ with .Params.summary }}<p class="post-summary">{{ . }}</p>{{ end }}
+        </a>
+      </li>
+      {{- end }}
+    </ul>
+    {{- else }}
+    <p class="feed-status">暂无动态，敬请期待。</p>
+    {{- end }}
+
+    <p class="post-list-back"><a href="{{ "" | relURL }}#feed">← 返回首页动态流</a></p>
+
+  </div>
+</section>
+
+{{- end -}}

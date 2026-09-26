@@ -1,0 +1,17 @@
+{{- /* 页脚。≤800px 时由 CSS 改为垂直堆叠。 */ -}}
+<footer class="site-footer">
+  <div class="footer-inner">
+    <p class="footer-slogan">让 AI 学习更有趣，让技术实践真正发生。</p>
+
+    <ul class="footer-links">
+      {{ with .Site.Params.github }}<li><a href="{{ . }}" rel="noopener">组织主页</a></li>{{ end }}
+      {{ with .Site.Params.email }}<li><a href="mailto:{{ . }}">联系邮箱</a></li>{{ end }}
+      <li><a href="{{ "#feed" | relURL }}">动态帖子流</a></li>
+    </ul>
+
+    <p class="footer-meta">
+      <span>Paddle Forward · Pioneer Together</span>
+      <span>&copy; {{ now.Year }} {{ .Site.Title }}</span>
+    </p>
+  </div>
+</footer>

@@ -1,0 +1,41 @@
+{{- define "main" -}}
+
+{{- /* 帖子详情页：/posts/<slug>/，由首页帖子流原生跳转到达。
+     类型标签文案与首页卡片保持一致（postKind → 项目 / 活动）。
+     注意：front matter 用 postKind，不用 kind / type —— 二者均为 Hugo 保留键
+     （kind 会导致构建报错 "unknown kind"，type 会覆盖页面类型）。 */ -}}
+{{- $kind := .Params.postKind | default "" -}}
+{{- $kindLabel := cond (eq $kind "project") "项目" (cond (eq $kind "event") "活动" $kind) -}}
+
+<article class="post-single grid-bg">
+  <div class="section-pad post-single-inner">
+
+    <nav class="post-back" aria-label="返回导航">
+      <a href="{{ "" | relURL }}#feed">← 返回动态流</a>
+    </nav>
+
+    <header class="post-header">
+      <p class="post-meta">
+        {{ with $kindLabel }}<span class="post-type is-{{ $kind }}">{{ . }}</span>{{ end }}
+        <time class="post-date" datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006 年 1 月 2 日" }}</time>
+      </p>
+
+      <h1 class="post-title">{{ .Title }}</h1>
+
+      {{ with .Params.summary }}<p class="post-summary">{{ . }}</p>{{ end }}
+    </header>
+
+    {{ with .Content }}
+    <div class="post-body">
+      {{ . }}
+    </div>
+    {{ end }}
+
+    <footer class="post-footer">
+      <a class="btn-ghost" href="{{ "" | relURL }}#feed">← 返回动态流</a>
+    </footer>
+
+  </div>
+</article>
+
+{{- end -}}
