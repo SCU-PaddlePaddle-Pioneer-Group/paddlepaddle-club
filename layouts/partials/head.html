@@ -1,0 +1,32 @@
+{{- /* 文档头：站点级配置由 Hugo 在构建期注入（.Site.Title / .Site.Params / relURL）。 */ -}}
+{{- $desc := .Site.Params.description -}}
+{{- with .Description }}{{ $desc = . }}{{ end -}}
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>{{ if .IsHome }}{{ .Site.Title }} · 技术社团{{ else }}{{ .Title }} · {{ .Site.Title }}{{ end }}</title>
+  <meta name="description" content="{{ $desc }}">
+  {{ with .Site.Params.author }}<meta name="author" content="{{ . }}">{{ end }}
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }} · {{ .Site.Title }}{{ end }}">
+  <meta property="og:description" content="{{ $desc }}">
+  <meta property="og:url" content="{{ .Permalink }}">
+
+  {{- /* 字体：主题显示字体与等宽字体（Google Fonts） */ -}}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap">
+
+  {{- /* 站点样式：全部样式集中在 static/css/main.css（单文件，无预处理器/框架）。
+         relURL 基于 baseURL 解析路径，保证 GitHub Pages 子路径部署下可正确加载。 */ -}}
+  <link rel="stylesheet" href="{{ "css/main.css" | relURL }}">
+
+  {{- if .IsHome }}
+  {{- /* 首页会由 nav.js 读取 posts JSON（构建期导出，见 layouts/index.json 与 PROJECT.md §2.7） */ -}}
+  {{- with .OutputFormats.Get "json" }}
+  <link rel="preload" href="{{ .RelPermalink }}" as="fetch" crossorigin="anonymous">
+  {{- end }}
+  {{- end }}
+</head>

@@ -1,0 +1,26 @@
+{{- define "main" -}}
+
+{{- /* 兜底错误页：任何未命中路由返回此页，唯一动作是回到首页（或直接去动态流）。 */ -}}
+<section class="error-page grid-bg" aria-labelledby="error-title">
+  <div class="section-pad error-inner">
+
+    <p class="error-code" aria-hidden="true">404</p>
+
+    <h1 id="error-title" class="error-title">页面走丢了</h1>
+    <p class="error-lede">
+      你访问的地址不存在，也可能已经被移动或删除。<br>
+      回到首页继续了解社团，或者直接去看最新动态。
+    </p>
+
+    <p class="error-actions">
+      <a class="btn-hero" href="{{ "" | relURL }}">
+        <span>返回首页</span>
+        <span class="btn-arrow" aria-hidden="true">→</span>
+      </a>
+      <a class="btn-ghost" href="{{ "#feed" | relURL }}">查看动态</a>
+    </p>
+
+  </div>
+</section>
+
+{{- end -}}

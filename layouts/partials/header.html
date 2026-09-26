@@ -1,0 +1,16 @@
+{{- /* 页头与主导航。锚点契约见 PROJECT.md §2.8：#top / #about / #feed。
+       ≤800px 时 .main-nav 由 CSS 隐藏，页头简化。 */ -}}
+<header class="site-header" id="top" data-top-anchor>
+  <div class="header-inner">
+    <a class="brand" href="{{ "#top" | relURL }}" aria-label="{{ .Site.Title }} 返回顶部">
+      <span class="brand-mark" aria-hidden="true">∞</span>
+      <span class="brand-name">{{ .Site.Title }}</span>
+    </a>
+
+    <nav class="main-nav" aria-label="站点导航">
+      <a href="{{ "#about" | relURL }}">关于我们</a>
+      <a href="{{ "#feed" | relURL }}">动态</a>
+      {{ with .Site.Params.github }}<a class="nav-ext" href="{{ . }}" rel="noopener">GitHub</a>{{ end }}
+    </nav>
+  </div>
+</header>

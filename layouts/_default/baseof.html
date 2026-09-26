@@ -1,0 +1,19 @@
+{{- /* 全站基础骨架：head / header / main / footer 四段。
+       首页、404、帖子详情页共用，避免各页重复一套 head 与页脚。 */ -}}
+<!DOCTYPE html>
+<html lang="{{ .Site.LanguageCode | default "zh-cn" }}">
+{{ partial "head.html" . }}
+<body{{ if .IsHome }} class="home"{{ end }}>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  {{ partial "header.html" . }}
+
+  <main id="main">
+    {{ block "main" . }}{{ end }}
+  </main>
+
+  {{ partial "footer.html" . }}
+
+  {{- /* 全站唯一的运行时脚本：加载 posts JSON、渲染首页帖子流并装配跳转链接（static/js/nav.js）。 */ -}}
+  <script src="{{ "js/nav.js" | relURL }}" defer></script>
+</body>
+</html>
