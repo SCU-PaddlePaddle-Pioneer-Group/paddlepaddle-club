@@ -337,6 +337,8 @@ section + section { border-top: 1px solid var(--line); }
 .post-summary { color: var(--muted); margin: 0; }
 
 /* ---------- 9. 页头 / 页脚 ---------- */
+.skip-link { display: none; } /* 隐藏“跳到主要内容”链接 */
+
 .site-header {
   position: sticky;
   top: 0;
