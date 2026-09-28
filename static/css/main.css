@@ -1,0 +1,473 @@
+/* ============================================================
+   PaddlePaddle Club · main.css（完整版：地基 + hero 视觉 + 响应式）
+   覆盖：:root 设计变量 / 基础排版 / grid-bg / 区块布局
+        hero 文案侧 + 神经网络视觉 / about / feed 帖子卡片契约（.post-*）
+        页头页脚 / 404 / 帖子详情与列表 / ≤800px 单断点响应式
+   约定来源：PROJECT.md v2.5 §2.6（变量）§2.9（类名）§4.4（视觉要点）
+   ============================================================ */
+
+/* ---------- 1. 设计系统：CSS 变量（§2.6，禁改变量名） ---------- */
+:root {
+  /* 色板 */
+  --ink: #07111f;        /* 深蓝主底 */
+  --ink-soft: #0d1d31;   /* 次深底（次级区块） */
+  --paper: #edf2ec;      /* 浅色底（浅色区块） */
+  --muted: #9eacba;      /* 次要文字 */
+  --acid: #cbff45;       /* 荧光绿 · 强调/CTA */
+  --cyan: #5ce1e6;       /* 青 · 辅助/描边 */
+  --line: rgba(237, 242, 236, .16); /* 分隔线 */
+
+  /* 字体 */
+  --display: 'Space Grotesk', Arial, sans-serif;
+  --mono: 'DM Mono', Consolas, monospace;
+
+  /* 派生色：由语义色算出，不改主变量（§2.6 用法约定） */
+  --acid-soft: color-mix(in srgb, var(--acid) 14%, transparent);
+  --cyan-soft: color-mix(in srgb, var(--cyan) 14%, transparent);
+}
+
+/* ---------- 2. 基础排版 ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--display);
+  font-size: 17px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 { line-height: 1.15; margin: 0 0 .4em; font-weight: 700; }
+p { margin: 0 0 1em; }
+a { color: var(--cyan); text-decoration: none; }
+a:hover { color: var(--acid); }
+img { max-width: 100%; }
+
+/* 无障碍：键盘聚焦时必须有可见轮廓（Review 要点 §5.4） */
+:focus-visible { outline: 2px solid var(--acid); outline-offset: 3px; }
+
+::selection { background: var(--acid); color: var(--ink); }
+
+/* ---------- 3. 网格背景（§4.4 参考实现） ---------- */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(92, 225, 230, .055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(92, 225, 230, .055) 1px, transparent 1px);
+  background-size: 72px 72px;
+}
+
+/* ---------- 4. 区块骨架 ---------- */
+.section-pad {
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: 96px 40px;
+}
+
+section + section { border-top: 1px solid var(--line); }
+
+/* 次级区块用略浅的底色区分层次 */
+.feed { background: var(--ink-soft); }
+
+/* 区块标题组（about / feed / post-list 共用） */
+.section-head { margin-bottom: 48px; }
+
+.section-index {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-size: clamp(30px, 4vw, 46px);
+  max-width: 22ch;
+}
+
+.section-desc { color: var(--muted); max-width: 60ch; margin: 0; }
+
+/* ---------- 5. HERO（文案侧） ---------- */
+.hero-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 左文案右视觉；≤800px 断点塌缩为单列（§12） */
+  gap: 64px;
+  align-items: center;
+  min-height: calc(100vh - 72px);
+}
+
+.hero-eyebrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.hero-title {
+  font-size: clamp(56px, 8vw, 128px); /* 流式大字：小屏56 → 大屏128 */
+  letter-spacing: -.02em;
+  margin: 24px 0 32px;
+}
+
+.hero-title-line { display: block; }
+.hero-title-accent { color: var(--acid); }
+
+.hero-lede {
+  color: var(--muted);
+  font-size: 18px;
+  max-width: 52ch;
+  margin-bottom: 40px;
+}
+
+.hero-actions { display: flex; flex-wrap: wrap; gap: 16px; margin: 0; }
+
+/* CTA 按钮对：实心荧光 / 空心描边（404 页复用） */
+.btn-hero,
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 28px;
+  border-radius: 999px;
+  font-weight: 500;
+  font-size: 16px;
+  transition: transform .15s ease, background-color .15s ease, color .15s ease;
+}
+
+.btn-hero {
+  background: var(--acid);
+  color: var(--ink);
+}
+.btn-hero:hover { background: var(--paper); color: var(--ink); transform: translateY(-2px); }
+.btn-arrow { font-family: var(--mono); }
+
+.btn-ghost {
+  border: 1px solid var(--line);
+  color: var(--paper);
+}
+.btn-ghost:hover { border-color: var(--cyan); color: var(--cyan); transform: translateY(-2px); }
+
+/* ---------- 5b. HERO 视觉：纯 CSS 神经网络（§4.4：静态定位，无动画帧、无 JS） ---------- */
+.hero-visual { display: grid; place-items: center; }
+
+.visual-stage {
+  position: relative;
+  width: min(460px, 92%);
+  aspect-ratio: 1; /* 正方形舞台，内部全部以它为坐标系 */
+}
+
+/* 轨道：两枚椭圆，宽高不等 + 反向旋转，交叉出立体轨道感 */
+.visual-orbit {
+  position: absolute;
+  top: 50%; left: 50%;
+  border: 1px solid color-mix(in srgb, var(--cyan) 38%, transparent);
+  border-radius: 50%;
+  box-shadow: 0 0 24px color-mix(in srgb, var(--cyan) 10%, transparent);
+}
+.visual-orbit-a { width: 96%; height: 60%; transform: translate(-50%, -50%) rotate(-28deg); }
+.visual-orbit-b {
+  width: 60%; height: 96%;
+  transform: translate(-50%, -50%) rotate(42deg);
+  border-color: color-mix(in srgb, var(--cyan) 22%, transparent);
+}
+
+/* 核心：径向渐变球体 + 多层外发光，中央 ∞ 带荧光投影 */
+.visual-core {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 34%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--acid) 45%, transparent);
+  background:
+    radial-gradient(circle at 36% 30%, color-mix(in srgb, var(--cyan) 26%, transparent), transparent 62%),
+    radial-gradient(circle, color-mix(in srgb, var(--acid) 16%, var(--ink-soft)) 0%, var(--ink-soft) 70%);
+  box-shadow:
+    0 0 48px color-mix(in srgb, var(--acid) 22%, transparent),
+    0 0 96px color-mix(in srgb, var(--cyan) 16%, transparent),
+    inset 0 0 28px color-mix(in srgb, var(--cyan) 12%, transparent);
+}
+
+.visual-core-mark {
+  font-size: clamp(40px, 5.6vw, 64px);
+  font-weight: 500;
+  color: var(--acid);
+  text-shadow: 0 0 20px color-mix(in srgb, var(--acid) 65%, transparent);
+}
+
+/* 节点：四枚 10px 辉光圆点，绝对定位四角（青×2 + 绿×2 交替） */
+.node {
+  position: absolute;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--cyan) 85%, transparent);
+}
+.node-1 { top: 8%;  left: 15%; }
+.node-2 { top: 13%; right: 8%; }
+.node-3 { bottom: 12%; left: 7%; }
+.node-4 { bottom: 6%; right: 16%; }
+.node-2, .node-4 {
+  background: var(--acid);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--acid) 85%, transparent);
+}
+
+/* 脉冲：box-shadow 扩散环层层叠出"呼吸光圈"（静态；仅 node-1 / node-3 内有此子元素） */
+.pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 5px  color-mix(in srgb, var(--cyan) 24%, transparent),
+    0 0 0 12px color-mix(in srgb, var(--cyan) 10%, transparent);
+}
+
+/* ---------- 6. ABOUT：宣言 + 流程行 + 核心数据 ---------- */
+.manifesto { max-width: 72ch; margin-bottom: 64px; }
+
+.manifesto-lead { font-size: 20px; color: var(--paper); }
+
+.manifesto-flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--muted);
+}
+.flow-arrow { color: var(--cyan); }
+
+/* 核心数据行：桌面 4 列（≤800px 变 2 列，见 §12） */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  margin: 0;
+  background: var(--line);      /* 缝隙即分隔线 */
+  border: 1px solid var(--line);
+}
+
+.stat {
+  background: var(--ink);
+  padding: 28px 24px;
+}
+
+.stat-label {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.stat-value {
+  font-size: clamp(34px, 4vw, 52px);
+  font-weight: 700;
+  color: var(--acid);
+  margin: 0;
+}
+
+/* ---------- 7. FEED 容器与状态（E 的 JS 会往这里填 DOM） ---------- */
+.feed-placeholder,
+.feed-status,
+.feed-noscript {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* ---------- 8. 帖子卡片契约 .post-*（§2.9，C/E 共用，勿改名） ---------- */
+.feed-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+}
+
+.post-card {
+  display: block;
+  padding: 26px 28px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--ink);
+  color: var(--paper);
+  transition: border-color .15s ease, transform .15s ease;
+}
+.post-card:hover { border-color: var(--cyan); transform: translateY(-2px); }
+
+.post-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 12px;
+}
+
+/* 类型标签：project=荧光绿 / event=青（is- 前缀状态类，§2.9） */
+.post-type {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid;
+}
+.post-type.is-project { color: var(--acid); border-color: var(--acid); background: var(--acid-soft); }
+.post-type.is-event   { color: var(--cyan); border-color: var(--cyan); background: var(--cyan-soft); }
+
+.post-date { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+
+.post-title { font-size: 22px; margin: 0 0 8px; }
+.post-card:hover .post-title { color: var(--acid); }
+
+.post-summary { color: var(--muted); margin: 0; }
+
+/* ---------- 9. 页头 / 页脚 ---------- */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: color-mix(in srgb, var(--ink) 82%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+
+.header-inner {
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: 18px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--paper); }
+.brand-mark { color: var(--acid); font-size: 22px; }
+.brand-name { font-family: var(--mono); letter-spacing: .12em; font-size: 14px; }
+
+.main-nav { display: flex; gap: 28px; }
+.main-nav a { color: var(--muted); font-size: 15px; }
+.main-nav a:hover { color: var(--acid); }
+.main-nav .nav-ext { font-family: var(--mono); }
+
+.site-footer { border-top: 1px solid var(--line); background: var(--ink); }
+
+.footer-inner {
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: 48px 40px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px 48px;
+  align-items: start;
+}
+
+.footer-slogan { margin: 0; font-size: 18px; }
+
+.footer-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 24px;
+}
+.footer-links a { font-family: var(--mono); font-size: 14px; color: var(--muted); }
+.footer-links a:hover { color: var(--acid); }
+
+.footer-meta {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 8px 0 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ---------- 10. 帖子详情页 / 列表页 ---------- */
+.post-single-inner,
+.post-list .section-pad { max-width: 860px; }
+
+.post-back, .post-list-back { margin-bottom: 24px; }
+.post-back a, .post-list-back a { font-family: var(--mono); font-size: 14px; color: var(--muted); }
+.post-back a:hover, .post-list-back a:hover { color: var(--acid); }
+
+.post-header { margin-bottom: 40px; }
+.post-header .post-title { font-size: clamp(30px, 4.5vw, 46px); }
+
+/* D 的 markdown 正文渲染区（.Content 注入处） */
+.post-body { max-width: 68ch; font-size: 17px; }
+.post-body h2 { margin-top: 2em; font-size: 26px; }
+.post-body h3 { margin-top: 1.6em; font-size: 21px; }
+.post-body ul, .post-body ol { padding-left: 1.4em; }
+.post-body code { font-family: var(--mono); font-size: .92em; background: var(--ink-soft); padding: 2px 6px; border-radius: 4px; }
+.post-body pre { background: var(--ink-soft); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; overflow-x: auto; }
+.post-body pre code { background: none; padding: 0; }
+.post-body blockquote { margin: 1.4em 0; padding-left: 18px; border-left: 3px solid var(--cyan); color: var(--muted); }
+.post-body hr { border: none; border-top: 1px solid var(--line); margin: 2.4em 0; }
+
+/* ---------- 11. 404 页 ---------- */
+.error-page { min-height: calc(100vh - 72px); display: grid; align-items: center; }
+.error-inner { text-align: left; }
+
+.error-code {
+  font-family: var(--mono);
+  font-size: clamp(96px, 16vw, 200px);
+  font-weight: 500;
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 2px var(--cyan); /* 描边空心大字 */
+  margin: 0 0 16px;
+}
+
+.error-title { font-size: clamp(28px, 4vw, 42px); }
+.error-lede { color: var(--muted); max-width: 52ch; }
+.error-actions { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 36px; }
+
+/* ---------- 12. 响应式：单断点 ≤800px（§4.4 清单） ---------- */
+@media (max-width: 800px) {
+  /* 页头简化：隐藏主导航（品牌保留） */
+  .main-nav { display: none; }
+
+  .header-inner { padding: 16px 20px; }
+  .section-pad { padding: 64px 20px; }
+
+  /* hero 由双栏塌缩为单列，视觉排到文案下方 */
+  .hero-inner {
+    grid-template-columns: 1fr;
+    gap: 48px;
+    min-height: auto;
+  }
+  .hero-title { margin: 16px 0 24px; }
+  .hero-visual { order: 2; }
+  .visual-stage { width: min(320px, 84%); }
+
+  /* 数据行 4 列 → 2 列 */
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+
+  /* 帖子卡片收紧 */
+  .post-card { padding: 20px 18px; }
+  .post-title { font-size: 19px; }
+
+  /* 页脚水平排列 → 垂直堆叠 */
+  .footer-inner { grid-template-columns: 1fr; padding: 36px 20px; }
+  .footer-links { flex-direction: column; gap: 12px; }
+  .footer-meta { flex-direction: column; gap: 4px; }
+
+  .error-page { min-height: auto; }
+}
