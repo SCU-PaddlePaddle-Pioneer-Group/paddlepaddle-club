@@ -1,6 +1,6 @@
 # PaddlePaddle Club — 项目文档
 
-> 版本：v2.6　·　状态：代码已清空，功能全部待实现　·　最近更新：2026-09
+> 版本：v2.7　·　状态：代码已清空，功能全部待实现　·　最近更新：2026-09
 
 ---
 
@@ -237,6 +237,32 @@ slug: "paddle-workshop"
 - B 只写结构并用上述 class；C 按这些 class 写样式；E 生成帖子 DOM 时复用 `.post-*` 类。
 - 不在 HTML 内联 style（例外：可访问性/语义必需时）。
 - 状态类如 `is-active` 只在 JS 控制时使用。
+
+---
+
+### 2.10 帖子图片引用规范（契约）
+
+> 帖子正文中的图片一律用 `pic` shortcode，避免绝对路径在 GitHub Pages 子路径部署下 404。供 **D（内容）** 使用。
+
+**用法**
+
+```markdown
+{{< pic src="/images/posts/<slug>/<figure>.jpg" alt="图片描述" caption="图注（可选）" >}}
+```
+
+**参数**
+
+| 参数 | 必填 | 说明 |
+| --- | --- | --- |
+| `src` | 是 | 图片路径，从 `/images/...` 开始（文件放 `static/images/posts/<slug>/`） |
+| `alt` | 否 | 替代文本 |
+| `caption` | 否 | 图注 |
+
+**规则**
+
+- 图片文件放 `static/images/posts/<slug>/`，`src` 一律以 `/images/posts/<slug>/` 开头。
+- **禁止**用原生 markdown `![alt](/images/...)` —— 绝对路径在子路径部署（如 GitHub Pages 项目页）会解析到错误位置、图片 404。
+- shortcode 内部会去掉前导 `/` 后再 `relURL`，自动拼接 `baseURL` 前缀（如 `/paddlepaddle-club/images/...`）。
 
 ---
 

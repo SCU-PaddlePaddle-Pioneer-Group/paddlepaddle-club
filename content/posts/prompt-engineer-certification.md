@@ -14,7 +14,7 @@ AI新风口！
 
 2025年10月31日，四川大学飞桨领航团在江安校区开展大模型提示词工程师首批培训与认证活动。经过学习与考核，川大学子成功获得由百度及国家深度学习技术及应用工程研究中心认证的"大模型提示词工程师"证书。
 
-![大模型提示词工程师首批培训与认证现场](/images/posts/prompt-engineer-certification/11-e6bf8c53.jpg)
+{{< pic src="/images/posts/prompt-engineer-certification/11-e6bf8c53.jpg" alt="大模型提示词工程师首批培训与认证现场" >}}
 
 大模型提示词工程师首批培训与认证现场
 
@@ -24,7 +24,7 @@ AI新风口！
 
 ## 证书
 
-![大模型提示词工程师证书样式](/images/posts/prompt-engineer-certification/14-e00d436a.png)
+{{< pic src="/images/posts/prompt-engineer-certification/14-e00d436a.png" alt="大模型提示词工程师证书样式" >}}
 
 大模型提示词工程师证书样式
 
@@ -64,7 +64,7 @@ AI新风口！
 
 证书效力：国企/事业单位AI岗位招聘加分项，部分高校可置换学分
 
-![领航团成员在认证活动现场合影](/images/posts/prompt-engineer-certification/21-18bff341.jpg)
+{{< pic src="/images/posts/prompt-engineer-certification/21-18bff341.jpg" alt="领航团成员在认证活动现场合影" >}}
 
 作为四川大学与百度战略合作的重要落点，SCU百度飞桨领航团将持续开展系列认证活动。领航团团长、项目负责人蒋培懿透露，第二期培训将于近期启动，覆盖人群将从计算机专业扩展至医学、法学等交叉学科。通过构建"培训-认证-就业"闭环生态，计划实现三年内认证人数破百，为新时代高校AI素养提升培养提供"川大方案"。
 

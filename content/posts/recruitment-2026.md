@@ -40,7 +40,7 @@ slug: "recruitment-2026"
 
 将人工智能技术与传统文化相结合，通过AI图像修复、生成与互动体验，让同学们在实践中感受数字技术赋能文化传承的无限可能。
 
-![社团成员与老师们的合照，左四为计算机学院副院长赵启军老师](/images/posts/recruitment-2026/11-d535ddfc.png)
+{{< pic src="/images/posts/recruitment-2026/11-d535ddfc.png" alt="社团成员与老师们的合照，左四为计算机学院副院长赵启军老师" >}}
 
 社团成员与老师们的合照，左四为计算机学院副院长赵启军老师
 
@@ -48,19 +48,19 @@ slug: "recruitment-2026"
 
 飞桨领航团紧跟技术发展组织了百度大模型提示词工程师，大模型应用开发工程师认证。帮助更多川大学子掌握核心竞争力，在人工智能的创新之路上行稳致远。
 
-![认证培训现场](/images/posts/recruitment-2026/12-4c2e981f.png)
+{{< pic src="/images/posts/recruitment-2026/12-4c2e981f.png" alt="认证培训现场" >}}
 
-![认证培训现场](/images/posts/recruitment-2026/13-c93d7597.png)
+{{< pic src="/images/posts/recruitment-2026/13-c93d7597.png" alt="认证培训现场" >}}
 
 ### 科技与AI主题讲座
 
 邀请相关老师、行业人员及技术嘉宾进行分享，帮助同学们了解人工智能的发展趋势、应用方向和学习路径，拓展专业视野。
 
-![科技与AI主题讲座现场](/images/posts/recruitment-2026/14-33d000c2.png)
+{{< pic src="/images/posts/recruitment-2026/14-33d000c2.png" alt="科技与AI主题讲座现场" >}}
 
-![科技与AI主题讲座现场](/images/posts/recruitment-2026/15-f2513d85.jpg)
+{{< pic src="/images/posts/recruitment-2026/15-f2513d85.jpg" alt="科技与AI主题讲座现场" >}}
 
-![科技与AI主题讲座现场](/images/posts/recruitment-2026/16-2b9f701d.jpg)
+{{< pic src="/images/posts/recruitment-2026/16-2b9f701d.jpg" alt="科技与AI主题讲座现场" >}}
 
 除此之外，我们还将继续探索AI体验活动、技术培训、项目实践、学科竞赛和企业交流等更多可能。
 
@@ -175,7 +175,7 @@ slug: "recruitment-2026"
 
 **报名方式**：请关注四川大学百度飞桨领航团后续通知。
 
-![百度飞桨领航团招新群二维码（QQ 群号 1098392715）](/images/posts/recruitment-2026/17-8f244d9b.jpg)
+{{< pic src="/images/posts/recruitment-2026/17-8f244d9b.jpg" alt="百度飞桨领航团招新群二维码（QQ 群号 1098392715）" >}}
 
 百度飞桨领航团招新群二维码
 

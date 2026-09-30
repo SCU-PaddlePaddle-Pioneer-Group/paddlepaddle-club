@@ -38,27 +38,27 @@ SCU飞桨领航团
 
 将人工智能技术与传统文化相结合，通过AI图像修复、生成与互动体验，让同学们在实践中感受数字技术赋能文化传承的无限可能。
 
-![AI修复唐卡体验活动现场](/images/posts/member-recruitment-2026/09-0e5b7241.jpg)
+{{< pic src="/images/posts/member-recruitment-2026/09-0e5b7241.jpg" alt="AI修复唐卡体验活动现场" >}}
 
-![AI修复唐卡体验活动现场](/images/posts/member-recruitment-2026/10-b312eae2.jpg)
+{{< pic src="/images/posts/member-recruitment-2026/10-b312eae2.jpg" alt="AI修复唐卡体验活动现场" >}}
 
-![AI修复唐卡体验活动现场](/images/posts/member-recruitment-2026/11-420bd288.jpg)
+{{< pic src="/images/posts/member-recruitment-2026/11-420bd288.jpg" alt="AI修复唐卡体验活动现场" >}}
 
 ### 百度大模型认证活动
 
 组织百度大模型提示词工程师、大模型应用开发工程师认证，帮助更多川大学子掌握核心竞争力，在人工智能创新之路上行稳致远。
 
-![大模型提示词工程师证书](/images/posts/member-recruitment-2026/13-d51c5daa.jpg)
+{{< pic src="/images/posts/member-recruitment-2026/13-d51c5daa.jpg" alt="大模型提示词工程师证书" >}}
 
-![领航团成员在认证活动现场](/images/posts/member-recruitment-2026/14-062379c0.jpg)
+{{< pic src="/images/posts/member-recruitment-2026/14-062379c0.jpg" alt="领航团成员在认证活动现场" >}}
 
 ### 科技与AI主题讲座
 
 邀请相关老师、行业人员及技术嘉宾进行分享，帮助同学们了解人工智能的发展趋势、应用方向和学习路径，拓展专业视野。
 
-![科技与AI主题讲座现场](/images/posts/member-recruitment-2026/15-b758b6ab.jpg)
+{{< pic src="/images/posts/member-recruitment-2026/15-b758b6ab.jpg" alt="科技与AI主题讲座现场" >}}
 
-![科技与AI主题讲座现场](/images/posts/member-recruitment-2026/16-e197d406.jpg)
+{{< pic src="/images/posts/member-recruitment-2026/16-e197d406.jpg" alt="科技与AI主题讲座现场" >}}
 
 除此之外，我们还将继续探索AI体验活动、技术培训、项目实践、学科竞赛和企业交流等更多可能。
 
@@ -98,7 +98,7 @@ SCU飞桨领航团
 
 备注："年级-专业-姓名"（如：24计算机张三）
 
-![会员群二维码](/images/posts/member-recruitment-2026/18-163f43e0.jpg)
+{{< pic src="/images/posts/member-recruitment-2026/18-163f43e0.jpg" alt="会员群二维码" >}}
 
 END
 

@@ -12,7 +12,7 @@ AI 绘图，
 
 我们一起按下了开始键
 
-![「梦境复刻计划」宣讲会现场](/images/posts/dream-recreation-talk/01-72360d19.jpg)
+{{< pic src="/images/posts/dream-recreation-talk/01-72360d19.jpg" alt="「梦境复刻计划」宣讲会现场" >}}
 
 键入梦境，一键成画。
 
@@ -30,7 +30,7 @@ AI 绘图，
 
 4. 现场答疑：一对一解决创作困惑
 
-![ERNIE Image 实操教学演示](/images/posts/dream-recreation-talk/02-00891cf2.jpg)
+{{< pic src="/images/posts/dream-recreation-talk/02-00891cf2.jpg" alt="ERNIE Image 实操教学演示" >}}
 
 ## SECOND · 比赛正式启动
 
@@ -46,7 +46,7 @@ AI 绘图，
 
 **截止时间**：2026年5月31日
 
-![宣讲会现场](/images/posts/dream-recreation-talk/03-1b819634.jpg)
+{{< pic src="/images/posts/dream-recreation-talk/03-1b819634.jpg" alt="宣讲会现场" >}}
 
 ## THIRD · 奖项设置
 

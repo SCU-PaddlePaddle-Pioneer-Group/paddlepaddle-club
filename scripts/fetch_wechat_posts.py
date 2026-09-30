@@ -16,7 +16,7 @@
 
 产出：
   content/posts/<slug>.md          —— 帖子（front matter 遵守 PROJECT.md §2.5，用 postKind）
-  static/images/posts/<slug>/*     —— 正文图片（本地化，正文用相对路径引用）
+  static/images/posts/<slug>/*     —— 正文图片（本地化，正文用 pic shortcode 引用，见 PROJECT.md §2.10）
   .wechat_cache/<slug>.html        —— 原始 HTML 存档（便于复查，可 gitignore）
 """
 
@@ -396,7 +396,9 @@ def render_markdown(meta: dict, img_map: dict[str, str]) -> str:
     for b in blocks:
         if b["type"] == "image":
             path = img_map.get(b["src"], b["src"])
-            lines.append(f"![{meta['title']}]({path})")
+            alt = meta["title"]
+            # 用 pic shortcode（§2.10）：TrimPrefix + relURL 自动带 baseURL 前缀，避免子路径 404
+            lines.append(f'{{{{< pic src="{path}" alt="{alt}" >}}}}')
             continue
         text = b.get("text", "").strip()
         if not text:

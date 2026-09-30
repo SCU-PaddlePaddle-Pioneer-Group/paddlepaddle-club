@@ -14,29 +14,29 @@ Summary Report
 
 向上滑动阅览
 
-![SCU飞桨领航团2025年终总结长图](/images/posts/annual-report-2025/03-88b40154.jpg)
+{{< pic src="/images/posts/annual-report-2025/03-88b40154.jpg" alt="SCU飞桨领航团2025年终总结长图" >}}
 
 ## 01 招新结果
 
 SCU飞桨领航团由计算机学院主办，由团长蒋培懿，副团长许涛、汪李昀虹筹办，下设活动部、技术部以及宣传部，社团总人数400余人，来自计算机学院、艺术学院、华西临床医学院等文理工医各学科专业，囊括大一至大四各年级、本科及研究生各层次成员，构建了一个互学互鉴、学科交叉的AI学习交流平台。
 
-![四川大学飞桨领航团组织架构图](/images/posts/annual-report-2025/05-7d582352.png)
+{{< pic src="/images/posts/annual-report-2025/05-7d582352.png" alt="四川大学飞桨领航团组织架构图" >}}
 
 ## 02 活动举办
 
 2025年，领航团举办了多项活动，活动丰富多彩、效果显著，活动累计覆盖人次近5位数。通过AI修复唐卡体验活动，参与者提升了科技与人文融合的认知度；通过AI讲座上行业专家的讲解，成员学习了解了众多行业前沿技术知识；通过多批次"大模型提示词工程师"认证、"大模型应用开发工程师"高阶认证活动，领航团初步构建起具有现实效力、川大特色的AI技术培训与认证体系。
 
-![大模型提示词工程师认证培训现场](/images/posts/annual-report-2025/07-c9918478.jpg)
+{{< pic src="/images/posts/annual-report-2025/07-c9918478.jpg" alt="大模型提示词工程师认证培训现场" >}}
 
-![大模型应用开发工程师认证现场](/images/posts/annual-report-2025/08-ce322669.jpg)
+{{< pic src="/images/posts/annual-report-2025/08-ce322669.jpg" alt="大模型应用开发工程师认证现场" >}}
 
 ## 03 参赛情况
 
 2025年，SCU飞桨领航团聚焦AI创新领域，组织成员参与中国高校计算机大赛、国际软件设计与应用大赛等省级及以上赛事，斩获佳绩。累计30余人次获奖，其中陈崞欣、邓又夫、柳欣然等同学表现突出，各获4项奖项，蒋培懿、许涛等4人各摘2项奖项，另有5人各获1项奖项，展现了领航团扎实的专业能力与强劲的竞赛实力。
 
-![获奖人次统计](/images/posts/annual-report-2025/10-da7725ba.jpg)
+{{< pic src="/images/posts/annual-report-2025/10-da7725ba.jpg" alt="获奖人次统计" >}}
 
-![2025年活动现场](/images/posts/annual-report-2025/09-e045a292.jpg)
+{{< pic src="/images/posts/annual-report-2025/09-e045a292.jpg" alt="2025年活动现场" >}}
 
 ## 04 推文发布
 
@@ -46,11 +46,11 @@ SCU飞桨领航团由计算机学院主办，由团长蒋培懿，副团长许�
 
 时间总是过的很快，一晃又到了年终，回望过去，这一年大家都很努力，也获得了很多收获，展望未来。新的一年，SCU飞桨领航团将继续做好四川大学——百度校企合作的承接者，继续开展大模型提示词工程师、AI Day、AI竞赛等品牌活动，联合打造产学研一体化AI人才成长平台，矢志不渝培育懂技术、能实践、会冲奖、敢落地的新时代AI复合型人才，助力川大人工智能教育持续深化、不断发展！
 
-![领航团成员合影](/images/posts/annual-report-2025/11-93a56836.jpg)
+{{< pic src="/images/posts/annual-report-2025/11-93a56836.jpg" alt="领航团成员合影" >}}
 
-![成员获奖瞬间](/images/posts/annual-report-2025/12-fbff9c6d.png)
+{{< pic src="/images/posts/annual-report-2025/12-fbff9c6d.png" alt="成员获奖瞬间" >}}
 
-![成员获奖证书](/images/posts/annual-report-2025/13-3700eb2c.jpg)
+{{< pic src="/images/posts/annual-report-2025/13-3700eb2c.jpg" alt="成员获奖证书" >}}
 
 By SCU飞桨领航团宣传部全体成员
 
