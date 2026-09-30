@@ -1,0 +1,37 @@
+{{- define "main" -}}
+
+{{- /* 社团文化落地页（/about/）：文案位于 content/about/_index.md。
+     结构复用帖子详情页的 .post-* class 契约与 .section-pad / grid-bg，保证视觉统一（§2.9）；
+     B（页面结构）后续可按需扩展为更丰富的版式。 */ -}}
+
+<section class="post-single grid-bg">
+  <div class="section-pad post-single-inner">
+
+    <nav class="post-back" aria-label="返回导航">
+      <a href="{{ "" | relURL }}#about">← 返回首页</a>
+    </nav>
+
+    <header class="post-header">
+      <p class="post-meta">
+        <span class="post-type">关于我们</span>
+      </p>
+
+      <h1 class="post-title">{{ .Title }}</h1>
+
+      {{ with .Params.summary }}<p class="post-summary">{{ . }}</p>{{ end }}
+    </header>
+
+    {{ with .Content }}
+    <div class="post-body">
+      {{ . }}
+    </div>
+    {{ end }}
+
+    <footer class="post-footer">
+      <a class="btn-ghost" href="{{ "" | relURL }}#feed">← 查看社团动态</a>
+    </footer>
+
+  </div>
+</section>
+
+{{- end -}}

@@ -22,3 +22,10 @@ desktop.ini
 
 # ===== 本地验证工具（各人自备的 hugo 可执行文件等，不入库）=====
 /.tools/
+
+# ===== 公众号爬取管线 =====
+# 原始 HTML 存档（用于复查抓取结果，体积大且可重新抓取）
+/.wechat_cache/
+# 待处理的文章链接清单
+/links.txt
+/links_batch.txt
