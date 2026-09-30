@@ -1,7 +1,8 @@
 {{- define "main" -}}
 
 {{- /* 帖子列表页 /posts/：构建期由 Hugo 直接渲染全部帖子，作为 #feed 动态流的
-      无 JS 兜底入口（首页 noscript 指向此页）。样式复用首页 .post-* 卡片契约。 */ -}}
+      无 JS 兜底入口（首页 noscript 指向此页）。卡片复用 §2.9 的 .post-* 契约，
+      与首页 nav.js 渲染出的卡片结构保持一致。 */ -}}
 {{- $posts := (where .Site.RegularPages "Section" "posts").ByDate.Reverse -}}
 
 <section class="post-list grid-bg" aria-labelledby="post-list-title">
@@ -10,22 +11,23 @@
     <header class="section-head">
       <p class="section-index" aria-hidden="true">动态</p>
       <h1 id="post-list-title" class="section-title">社团动态</h1>
-      <p class="section-desc">项目与活动合并为统一帖子流，按时间倒序展示，用类型标签区分。</p>
+      <p class="section-desc">这里记录着社团走过的每一步：同学们一起学过的技术、正在推进的项目，以及每一次活动留下的成果。</p>
     </header>
 
     {{- if $posts }}
     <ul class="feed-list">
       {{- range $posts }}
-      {{- $kind := .Params.postKind | default "" }}
-      {{- $kindLabel := cond (eq $kind "project") "项目" (cond (eq $kind "event") "活动" $kind) }}
+      {{- $kind := partial "post-kind.html" . }}
       <li>
         <a class="post-card" href="{{ .RelPermalink }}">
           <p class="post-meta">
-            {{ with $kindLabel }}<span class="post-type is-{{ $kind }}">{{ . }}</span>{{ end }}
+            {{- with $kind.label }}
+            <span class="post-type {{ $kind.modifier }}">{{ . }}</span>
+            {{- end }}
             <time class="post-date" datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006 年 1 月 2 日" }}</time>
           </p>
           <h2 class="post-title">{{ .Title }}</h2>
-          {{ with .Params.summary }}<p class="post-summary">{{ . }}</p>{{ end }}
+          {{- with .Params.summary }}<p class="post-summary">{{ . }}</p>{{ end }}
         </a>
       </li>
       {{- end }}

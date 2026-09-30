@@ -1,0 +1,26 @@
+{{- /* 帖子类型标签的部分：由 front matter 的 postKind 派生展示文案与修饰类。
+     返回 dict：label（项目 / 活动 / 原文）、modifier（is-project / is-event）。
+
+     用法：{{ $k := partial "post-kind.html" . }}
+           {{ with $k.label }}<span class="post-type {{ $k.modifier }}">{{ . }}</span>{{ end }}
+
+     调用方：layouts/posts/single.html、layouts/posts/list.html。
+     nav.js 渲染首页帖子流时使用同一套文案与 .is-project / .is-event 状态类（§2.9）。
+
+     注意：postKind 之外的 kind / type 均为 Hugo 保留键，不可使用
+     （kind 会导致构建失败 "unknown kind"，type 会覆盖页面类型）。 */ -}}
+{{- $kind := .Params.postKind | default "" -}}
+{{- $label := "" -}}
+{{- $modifier := "" -}}
+{{- if eq $kind "project" -}}
+  {{- $label = "项目" -}}
+  {{- $modifier = "is-project" -}}
+{{- else if eq $kind "event" -}}
+  {{- $label = "活动" -}}
+  {{- $modifier = "is-event" -}}
+{{- else if $kind -}}
+  {{- /* 未知类型：原文展示，仍加前缀类以便统一落样式 */ -}}
+  {{- $label = $kind -}}
+  {{- $modifier = printf "is-%s" $kind -}}
+{{- end -}}
+{{- return (dict "label" $label "modifier" $modifier) -}}
