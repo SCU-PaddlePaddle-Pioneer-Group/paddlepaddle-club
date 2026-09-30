@@ -1,0 +1,10 @@
+{{- /* 图片 shortcode：用 relURL 让 src 带上 baseURL 前缀，解决 GitHub Pages 子路径部署图片 404。
+       用法：{{< pic src="/images/posts/xxx/01.jpg" alt="描述" caption="图注(可选)" >}} */ -}}
+{{- $src := .Get "src" -}}
+{{- if not $src }}{{ errorf "pic shortcode 缺少必需参数 src" }}{{ end -}}
+{{- $alt := .Get "alt" | default "" -}}
+{{- $caption := .Get "caption" | default "" -}}
+<figure class="post-figure">
+  <img src="{{ $src | strings.TrimPrefix "/" | relURL }}" alt="{{ $alt }}" loading="lazy">
+  {{- with $caption }}<figcaption>{{ . }}</figcaption>{{ end -}}
+</figure>

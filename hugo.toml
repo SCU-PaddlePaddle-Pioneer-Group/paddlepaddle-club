@@ -4,9 +4,34 @@ title = 'PADDLEPADDLE CLUB'
 defaultContentLanguage = 'zh'
 enableRobotsTXT = true
 
+# 站点不使用分类/标签，禁用对应空页面，消除构建 WARN
+disableKinds = ['taxonomy', 'term']
+
 [params]
   description = 'PaddlePaddle Club · 用技术连接想法，用开源推动成长。'
   author = 'PaddlePaddle Club'
+
+  # —— 真实素材（D · 内容，来源见 PROJECT.md 协作约定与公众号「大川飞桨领航团」）——
+  # GitHub 组织（外链，事实已核实：组织主页与团标仓库）
+  github = 'https://github.com/SCU-PaddlePaddle-Pioneer-Group'
+  # 首屏 Hero 文案
+  slogan = '让想法跑起来'
+  sloganAccent = '让学习真正发生'
+  heroLede = '四川大学飞桨领航团 · 面向全校同学的 AI 学习、技术实践与创新交流社区。我们以飞桨为起点，连接课程、代码、项目与真实问题。'
+  # 关于区块：宣言
+  aboutTitle = '一起学 AI · 一起做项目 · 一起把想法变成现实'
+  manifesto = '四川大学飞桨领航团，是一个面向四川大学同学的 AI 学习、技术实践与创新交流社区。我们以飞桨为起点，连接课程、代码、项目与真实问题，让每一次学习都能沉淀为可复用的成果。'
+
+  # —— 核心数据（成员 / 项目 / 分享）：待社团提供真实数字后取消注释填写；
+  #    缺失时首页显示「—」，避免虚构数据（Review 要点 §5.4：数据与事实一致）。
+  # [params.stats]
+  #   members = ''   # 在校成员数
+  #   projects = ''  # 项目 / 实验数
+  #   shares = ''    # 技术分享次数
+  #   topics = ''    # 覆盖方向（如 "CV · NLP · Agent"）
+
+  # —— 联系邮箱：暂无公开邮箱；确认后填写即可在页脚自动出现「联系邮箱」外链。
+  # email = 'club@example.com'
 
 [markup]
   [markup.goldmark]
