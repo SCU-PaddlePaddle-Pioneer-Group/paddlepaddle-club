@@ -36,21 +36,21 @@ slug: "recruitment-2026"
 
 将人工智能技术与传统文化相结合，通过AI图像修复、生成与互动体验，让同学们在实践中感受数字技术赋能文化传承的无限可能。
 
-![社团成员与老师们的合照，左四为计算机学院副院长赵启军老师](images/posts/recruitment-2026/11-d535ddfc.png)
+![社团成员与老师们的合照，左四为计算机学院副院长赵启军老师](images/posts/recruitment-2026/11-d535ddfc.jpg)
 
 ### 百度大模型提示词工程师 / 大模型应用开发工程师认证
 
 飞桨领航团紧跟技术发展组织了百度大模型提示词工程师，大模型应用开发工程师认证。帮助更多川大学子掌握核心竞争力，在人工智能的创新之路上行稳致远。
 
-![认证培训现场](images/posts/recruitment-2026/12-4c2e981f.png)
+![认证培训现场](images/posts/recruitment-2026/12-4c2e981f.jpg)
 
-![认证培训现场](images/posts/recruitment-2026/13-c93d7597.png)
+![认证培训现场](images/posts/recruitment-2026/13-c93d7597.jpg)
 
 ### 科技与AI主题讲座
 
 邀请相关老师、行业人员及技术嘉宾进行分享，帮助同学们了解人工智能的发展趋势、应用方向和学习路径，拓展专业视野。
 
-![科技与AI主题讲座现场](images/posts/recruitment-2026/14-33d000c2.png)
+![科技与AI主题讲座现场](images/posts/recruitment-2026/14-33d000c2.jpg)
 
 ![科技与AI主题讲座现场](images/posts/recruitment-2026/15-f2513d85.jpg)
 
