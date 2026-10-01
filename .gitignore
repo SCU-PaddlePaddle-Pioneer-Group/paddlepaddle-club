@@ -18,6 +18,10 @@ desktop.ini
 *.tmp
 /.temp/
 
+# ===== Python 缓存（legacy/scripts 工具运行时产生，不入库）=====
+__pycache__/
+*.py[cod]
+
 # ===== 旧 Hugo 管线遗留（legacy/ 内使用）=====
 /.tools/
 /.wechat_cache/
