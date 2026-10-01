@@ -1,11 +1,8 @@
-# ===== Hugo 构建产物与缓存 =====
-# 构建产物目录（CI 构建时重新生成，无需提交）
-/public/
-# Hugo 资源缓存
-/resources/_gen/
-/resources/cache/
-# 本地构建锁文件
-.hugo_build.lock
+# ===== 依赖与构建产物 =====
+node_modules
+dist
+dist-ssr
+*.local
 
 # ===== 系统文件 =====
 .DS_Store
@@ -19,15 +16,10 @@ desktop.ini
 # ===== 日志与临时文件 =====
 *.log
 *.tmp
-# 本地临时目录（备份、草稿、中间产物，不入库）
 /.temp/
 
-# ===== 本地验证工具（各人自备的 hugo 可执行文件等，不入库）=====
+# ===== 旧 Hugo 管线遗留（legacy/ 内使用）=====
 /.tools/
-
-# ===== 公众号爬取管线 =====
-# 原始 HTML 存档（用于复查抓取结果，体积大且可重新抓取）
 /.wechat_cache/
-# 待处理的文章链接清单
 /links.txt
 /links_batch.txt

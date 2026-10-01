@@ -1,0 +1,270 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   四川大学飞桨领航团 · 设计系统（DESIGN.md 唯一事实源）
+   「川大蓝 · 编辑风」：纸面白 + 团徽蓝 #0C519F + 信号橙 #E4572E
+   平涂色域、发丝线分隔、水印大字、克制的微交互
+   ============================================================ */
+
+@layer base {
+  :root {
+    /* —— 色板（HSL 分量，Tailwind 以 hsl(var(--x)) 消费）—— */
+    --paper: 48 33% 97%;            /* #FAF9F5 暖纸白 · 页面底色 */
+    --background: var(--paper);
+    --foreground: 207 43% 11%;      /* #101C28 墨蓝 · 主文字 */
+    --card: 48 33% 97%;
+    --card-foreground: 207 43% 11%;
+    --popover: 48 33% 97%;
+    --popover-foreground: 207 43% 11%;
+
+    --primary: 210 86% 34%;         /* #0C519F 团徽蓝 · 品牌主色 */
+    --primary-foreground: 0 0% 100%;
+    --primary-deep: 211 88% 25%;    /* #083B76 深蓝 · hover/深底 */
+
+    --accent: 14 76% 54%;           /* #E4572E 信号橙 · 唯一强调色（克制使用） */
+    --accent-foreground: 0 0% 100%;
+
+    --ink: 210 72% 14%;             /* #0A2540 深海军蓝 · 平涂色域区块/页脚 */
+    --ink-foreground: 48 33% 97%;
+
+    --secondary: 210 25% 93%;       /* #E7EDF2 冷灰蓝 · 次级表面 */
+    --secondary-foreground: 207 43% 11%;
+    --muted: 210 25% 93%;
+    --muted-foreground: 208 14% 42%;/* #5C6B7A 次要文字 */
+
+    --destructive: 0 72% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 208 20% 87%;          /* #D8E0E7 发丝线 */
+    --input: 208 20% 87%;
+    --ring: 210 86% 34%;
+
+    --radius: 0.375rem;             /* 编辑风：小圆角，近乎锐利 */
+
+    /* —— 字体 —— */
+    --font-display: 'Archivo', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Consolas, 'PingFang SC', 'Microsoft YaHei', monospace;
+
+    /* sidebar 变量（shadcn 组件需要，与主色板对齐） */
+    --sidebar-background: var(--paper);
+    --sidebar-foreground: 207 43% 11%;
+    --sidebar-primary: 210 86% 34%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 25% 93%;
+    --sidebar-accent-foreground: 207 43% 11%;
+    --sidebar-border: 208 20% 87%;
+    --sidebar-ring: 210 86% 34%;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-display);
+    font-size: 16.5px;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* 中文不使用斜体（伪斜体伤害阅读）；强调用字重/颜色 */
+  em, i { font-style: normal; }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+
+  ::selection { background: hsl(var(--primary)); color: #fff; }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--accent));
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* —— 布局容器 —— */
+  .container-x {
+    @apply mx-auto w-full max-w-[1280px] px-6 md:px-10;
+  }
+
+  /* —— 字体工具 —— */
+  .font-display { font-family: var(--font-display); }
+  .font-mono { font-family: var(--font-mono); }
+
+  /* —— 区块题头三行式：等宽序号 + 橙色短杠 → 大标题 → 次要描述 —— */
+  .section-eyebrow {
+    @apply flex items-center gap-3 font-mono text-[12px] font-medium uppercase tracking-[0.22em] text-muted-foreground;
+  }
+  .section-eyebrow::before {
+    content: '';
+    @apply block h-[3px] w-8 bg-accent;
+  }
+  .section-title {
+    @apply mt-4 font-display text-[clamp(1.9rem,3.6vw,2.9rem)] font-extrabold leading-[1.12] tracking-[-0.02em];
+  }
+  .section-desc {
+    @apply mt-4 max-w-[62ch] text-[15.5px] leading-relaxed text-muted-foreground;
+  }
+
+  /* —— 水印大字：区块边缘的幽灵排版（装饰，aria-hidden）—— */
+  .watermark {
+    @apply pointer-events-none absolute select-none font-display font-black uppercase leading-none;
+    color: transparent;
+    -webkit-text-stroke: 1.5px hsl(var(--foreground) / 0.07);
+    letter-spacing: -0.03em;
+  }
+  .watermark-solid {
+    @apply pointer-events-none absolute select-none font-display font-black uppercase leading-none;
+    color: hsl(var(--foreground) / 0.04);
+    letter-spacing: -0.03em;
+  }
+
+  /* —— 按钮：胶囊形（DESIGN.md §组件）—— */
+  .btn-pill {
+    @apply inline-flex items-center gap-2.5 rounded-full px-7 py-3.5 font-display text-[15px] font-semibold leading-none transition-all duration-200;
+  }
+  .btn-primary {
+    @apply btn-pill bg-primary text-primary-foreground hover:bg-[hsl(var(--primary-deep))];
+  }
+  .btn-primary .btn-arrow { @apply transition-transform duration-200; }
+  .btn-primary:hover .btn-arrow { transform: translateX(4px); }
+  .btn-outline {
+    @apply btn-pill border border-foreground/20 text-foreground hover:border-primary hover:text-primary;
+  }
+  .btn-accent {
+    @apply btn-pill bg-accent text-accent-foreground hover:bg-[hsl(14_76%_46%)];
+  }
+  /* 深底色域上的幽灵按钮 */
+  .btn-ghost-on-ink {
+    @apply btn-pill border border-white/25 text-white hover:border-white hover:bg-white hover:text-[hsl(var(--ink))];
+  }
+
+  /* —— 标签：等宽小号 + 1px 描边，直角 —— */
+  .tag {
+    @apply inline-flex items-center border px-2.5 py-1 font-mono text-[11px] font-medium uppercase tracking-[0.16em] leading-none;
+  }
+  .tag-event { @apply tag border-accent/70 text-accent; }
+  .tag-project { @apply tag border-primary/70 text-primary; }
+
+  /* —— 发丝线列表行（动态流，非卡片）——
+     移动端两行式：日期|标签|箭头 在上，标题通栏在下；
+     ≥md 单行四列：130px 日期 | 110px 标签 | 1fr 标题 | 40px 箭头。
+     子元素顺序约定：1=日期 2=标签 3=标题 4=箭头。 */
+  .post-row {
+    @apply grid items-baseline gap-x-4 gap-y-2 border-t border-border py-6 transition-colors duration-150;
+    grid-template-columns: auto 1fr auto;
+  }
+  .post-row > :nth-child(1) { grid-column: 1; grid-row: 1; }
+  .post-row > :nth-child(2) { grid-column: 2; grid-row: 1; }
+  .post-row > :nth-child(3) { grid-column: 1 / -1; grid-row: 2; }
+  .post-row > :nth-child(4) { grid-column: 3; grid-row: 1; justify-self: end; }
+  @media (min-width: 768px) {
+    .post-row {
+      grid-template-columns: 130px 110px 1fr 40px;
+      align-items: center;
+      column-gap: 1.5rem;
+    }
+    .post-row > :nth-child(1) { grid-column: 1; grid-row: auto; }
+    .post-row > :nth-child(2) { grid-column: 2; grid-row: auto; }
+    .post-row > :nth-child(3) { grid-column: 3; grid-row: auto; }
+    .post-row > :nth-child(4) { grid-column: 4; grid-row: auto; }
+  }
+  .post-row:last-child { @apply border-b; }
+  .post-row:hover { background: hsl(var(--foreground) / 0.025); }
+  .post-row .row-title { @apply transition-colors duration-150 group-hover:text-primary; }
+  .post-row .row-arrow { @apply transition-transform duration-200 group-hover:translate-x-1.5 group-hover:text-primary; }
+
+  /* —— 链接下划线滑动（导航与正文链接的微交互）—— */
+  .link-slide {
+    @apply relative;
+  }
+  .link-slide::after {
+    content: '';
+    @apply absolute -bottom-0.5 left-0 h-[2px] w-full origin-left scale-x-0 bg-current transition-transform duration-200;
+  }
+  .link-slide:hover::after, .link-slide.is-active::after { transform: scaleX(1); }
+
+  /* —— 深海军蓝平涂色域 —— */
+  .field-ink {
+    background: hsl(var(--ink));
+    color: hsl(var(--ink-foreground));
+  }
+  .field-blue {
+    background: hsl(var(--primary));
+    color: #fff;
+  }
+
+  /* —— 数据行：发丝线分隔的大数字 —— */
+  .stat-value {
+    @apply whitespace-nowrap font-display text-[clamp(2.1rem,3.6vw,3.2rem)] font-extrabold leading-none tracking-[-0.02em] text-primary;
+  }
+  .stat-label {
+    @apply mt-3 font-mono text-[11.5px] font-medium uppercase tracking-[0.18em] text-muted-foreground;
+  }
+
+  /* —— 帖子正文排版（markdown 渲染容器）—— */
+  .post-body {
+    @apply text-[16.5px] leading-[1.95] text-foreground/90;
+  }
+  .post-body h2 {
+    @apply mt-14 mb-5 font-display text-[1.55rem] font-bold leading-snug tracking-[-0.01em] text-foreground;
+  }
+  .post-body h2::before {
+    content: '';
+    @apply mb-3 block h-[3px] w-7 bg-accent;
+  }
+  .post-body h3 {
+    @apply mt-10 mb-4 font-display text-[1.2rem] font-bold text-foreground;
+  }
+  .post-body p { @apply my-5; }
+  .post-body ul, .post-body ol { @apply my-5 pl-6; }
+  .post-body ul { @apply list-disc; }
+  .post-body ol { @apply list-decimal; }
+  .post-body li { @apply my-1.5; }
+  .post-body li::marker { color: hsl(var(--primary)); font-weight: 600; }
+  .post-body strong { @apply font-semibold text-foreground; }
+  .post-body a { @apply font-medium text-primary underline decoration-primary/30 underline-offset-4 hover:decoration-primary; }
+  .post-body blockquote {
+    @apply my-8 border-l-[3px] border-primary/40 pl-5 text-muted-foreground;
+  }
+  .post-body hr { @apply my-12 border-border; }
+  .post-body code {
+    @apply rounded-sm bg-secondary px-1.5 py-0.5 font-mono text-[0.88em] text-foreground;
+  }
+  .post-body pre {
+    @apply my-8 overflow-x-auto border border-border bg-secondary p-5;
+  }
+  .post-body pre code { @apply bg-transparent p-0; }
+  .post-body figure { @apply my-9; }
+  .post-body figure img {
+    @apply w-full border border-border;
+  }
+  .post-body figcaption {
+    @apply mt-3 text-center font-mono text-[12.5px] tracking-wide text-muted-foreground;
+  }
+  .post-body img { @apply border border-border; }
+
+  /* —— 图片处理：活动现场照片默认微灰度，hover 还原彩色 —— */
+  .img-toned {
+    filter: saturate(0.82) contrast(1.02);
+    transition: filter 0.3s ease;
+  }
+  .img-toned:hover { filter: saturate(1) contrast(1); }
+}
