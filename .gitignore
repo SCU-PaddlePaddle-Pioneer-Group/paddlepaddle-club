@@ -18,6 +18,29 @@ desktop.ini
 *.tmp
 /.temp/
 
+# ===== 本地配置、凭据与运行数据 =====
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+/server/data/
+/server/uploads/
+/server/sessions/
+
+# ===== 本地缓存与测试产物 =====
+.npm-cache/
+.pnpm-store/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+
 # ===== Python 缓存（legacy/scripts 工具运行时产生，不入库）=====
 __pycache__/
 *.py[cod]

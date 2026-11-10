@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { Routes, Route, useLocation } from 'react-router'
+import { Routes, Route, Navigate, useLocation } from 'react-router'
+import ModulePending from '@/pages/ModulePending'
 import Header from './components/layout/Header'
 import Footer from './components/layout/Footer'
 import Home from './pages/Home'
@@ -43,6 +44,15 @@ export default function App() {
           <Route path="/posts" element={<Posts />} />
           <Route path="/posts/:slug" element={<PostDetail />} />
           <Route path="/about" element={<About />} />
+          {/* B、D 的页面交付后，替换以下占位 element，保留约定地址。 */}
+          <Route path="/competitions" element={<ModulePending title="赛事中心即将开放" description="赛事信息与报名安排将在这里发布，欢迎稍后关注。" />} />
+          <Route path="/competitions/:id" element={<ModulePending title="赛事详情即将开放" description="比赛规则与报名入口准备中，欢迎稍后关注。" />} />
+          <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
+          <Route path="/admin/login" element={<ModulePending title="管理后台暂未开放" description="管理服务准备中，请稍后访问。" />} />
+          <Route path="/admin/competitions" element={<ModulePending title="赛事管理暂未开放" description="管理服务准备中，请稍后访问。" />} />
+          <Route path="/admin/competitions/new" element={<ModulePending title="新建赛事暂未开放" description="管理服务准备中，请稍后访问。" />} />
+          <Route path="/admin/competitions/:id/edit" element={<ModulePending title="赛事编辑暂未开放" description="管理服务准备中，请稍后访问。" />} />
+          <Route path="/admin/competitions/:id/registrations" element={<ModulePending title="报名管理暂未开放" description="管理服务准备中，请稍后访问。" />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
