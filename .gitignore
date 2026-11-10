@@ -17,6 +17,10 @@ desktop.ini
 *.log
 *.tmp
 /.temp/
+/server/.env
+/server/.env.*
+!/server/.env.example
+/server/data/
 
 # ===== 本地配置、凭据与运行数据 =====
 .env
