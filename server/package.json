@@ -9,7 +9,8 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
     "db:migrate": "tsx src/db/migrate-cli.ts",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "test": "tsx --test src/db/migrate.test.ts src/routes/publicCompetitions.test.ts"
   },
   "dependencies": {
     "express": "^5.1.0"
