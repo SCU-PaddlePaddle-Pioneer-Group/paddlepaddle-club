@@ -124,3 +124,16 @@ export function formatBeijingTime(iso: string): string {
 export function isoToLocalInputValue(iso: string): string {
   return formatBeijingTime(iso).replace(' ', 'T')
 }
+
+/**
+ * datetime-local 无时区值 → UTC ISO 8601 字符串。
+ * 按北京时间（+08:00）解释输入值，转换结果与机器时区无关（契约：拒绝无时区本地时间）。
+ * 供编辑表单提交前调用；无效输入返回空字符串。
+ */
+export function isoFromLocalInput(local: string): string {
+  if (!local) return ''
+  // datetime-local 默认精度到分钟（16 字符），含秒（19 字符）时原样使用
+  const withSeconds = local.length === 16 ? `${local}:00` : local
+  const date = new Date(`${withSeconds}+08:00`)
+  return Number.isNaN(date.getTime()) ? '' : date.toISOString()
+}

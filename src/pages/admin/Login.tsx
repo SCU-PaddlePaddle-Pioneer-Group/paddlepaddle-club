@@ -37,8 +37,10 @@ export default function Login() {
   })
 
   const onSubmit = () => {
-    // TODO(D1/D6): 调用 POST /api/admin/login；成功保存会话，失败展示后台返回 message。
-    // 骨架阶段一律不显示成功状态（细则：失败不得显示成功）。
+    // TODO(D1/D6): 调用 POST /api/admin/login；成功保存会话并跳转，失败按
+    // errorMessages.ts 的 loginErrorMessage(code) 展示（INVALID_CREDENTIALS /
+    // RATE_LIMITED / ORIGIN_NOT_ALLOWED / INTERNAL_ERROR），401 UNAUTHENTICATED
+    // 类失效由 api.ts 统一拦截跳登录页。骨架阶段一律不显示成功状态（细则：失败不得显示成功）。
     setNotice('后台接口未接入：骨架阶段不执行真实登录，等待 docs/api.md 与 src/lib/api.ts 就绪。')
   }
 

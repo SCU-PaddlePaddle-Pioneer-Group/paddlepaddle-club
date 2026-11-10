@@ -12,16 +12,30 @@ import { z } from 'zod'
 import {
   MOCK_COMPETITIONS,
   formatBeijingTime,
+  isoFromLocalInput,
   isoToLocalInputValue,
 } from '@/mocks/competitions'
 import { AdminPageHeader, CompetitionStatusBadge } from './shared'
 
-// TODO(D3): 字段与请求体以 docs/api.md 定稿为准（当前约定 POST / PATCH /api/admin/competitions）
+// TODO(D3): 字段与请求体以 docs/api.md 定稿为准（当前约定 POST / PATCH /api/admin/competitions）。
+// 长度上限对齐 C 开发文档 §7.1：标题 120、简介 1000、规则 10000；截止时间提交前转 ISO 8601。
 const editSchema = z.object({
-  title: z.string().min(1, '请填写比赛名称'),
-  summary: z.string().min(1, '请填写比赛简介'),
-  rules: z.string().min(1, '请填写比赛规则'),
-  registrationDeadline: z.string().min(1, '请选择报名截止时间'),
+  title: z
+    .string()
+    .min(1, '请填写比赛名称')
+    .max(120, '比赛名称不能超过 120 字'),
+  summary: z
+    .string()
+    .min(1, '请填写比赛简介')
+    .max(1000, '比赛简介不能超过 1000 字'),
+  rules: z
+    .string()
+    .min(1, '请填写比赛规则')
+    .max(10000, '比赛规则不能超过 10000 字'),
+  registrationDeadline: z
+    .string()
+    .min(1, '请选择报名截止时间')
+    .refine((value) => isoFromLocalInput(value) !== '', '报名截止时间无效，请重新选择'),
 })
 
 type EditValues = z.infer<typeof editSchema>
@@ -72,12 +86,24 @@ export default function CompetitionEdit() {
     )
   }
 
+  const onSubmit = (values: EditValues) => {
+    // 截止时间：datetime-local 无时区值 → UTC ISO 8601（按北京时间解释）。
+    // TODO(D3/D4): 接 B 的 api.ts 后，POST / PATCH 时直接提交该 ISO 值。
+    const deadlineIso = isoFromLocalInput(values.registrationDeadline)
+    if (!deadlineIso) {
+      setNotice('报名截止时间无效：请重新选择。')
+      return
+    }
+    setNotice(
+      `「${isEdit ? '保存修改' : '新建草稿'}」后台接口未接入：骨架阶段不提交数据。` +
+        `待提交截止时间（ISO 8601）：${deadlineIso}`,
+    )
+  }
+
   const notWired = (action: string) => {
     // 细则红线：操作结果必须来自后台响应；骨架阶段不显示任何成功状态。
     setNotice(`「${action}」后台接口未接入：骨架阶段不提交数据。`)
   }
-
-  const onSubmit = () => notWired(isEdit ? '保存修改' : '新建草稿')
 
   const publishActions = (
     <>
@@ -124,6 +150,7 @@ export default function CompetitionEdit() {
           <input
             id="competition-title"
             type="text"
+            maxLength={120}
             className={inputClass}
             {...register('title')}
           />
@@ -135,9 +162,10 @@ export default function CompetitionEdit() {
             比赛简介
           </label>
           <textarea
-            id="competition-summary"
+            id="competition-rules"
+            maxLength={10000}
             className={textareaClass}
-            {...register('summary')}
+            {...register('rules')}
           />
           {errors.summary && (
             <p className="mt-1.5 text-[13px] text-accent">{errors.summary.message}</p>
