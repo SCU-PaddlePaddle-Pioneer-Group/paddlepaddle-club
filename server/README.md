@@ -6,7 +6,7 @@
 Set-Location 'D:\AAAcode storage total\paddle\paddlepaddle-club\server'
 node --version
 npm.cmd ci
-Copy-Item .env.example .env
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 notepad .env
 npm.cmd run db:migrate
