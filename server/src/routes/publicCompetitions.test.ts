@@ -41,10 +41,11 @@ function insertCompetition(
     id?: string
     status?: 'draft' | 'published' | 'offline'
     deadline?: string
+    createdAt?: string
   } = {},
 ): string {
   const id = options.id ?? randomUUID()
-  const now = new Date().toISOString()
+  const now = options.createdAt ?? new Date().toISOString()
   database
     .prepare(
       `INSERT INTO competitions
@@ -113,20 +114,27 @@ test('public competition endpoints only expose published competitions', async ()
   }
 })
 
-test('public competition list puts open registrations before expired ones', async () => {
+test('public competition list sorts by creation time descending then ID ascending', async () => {
   const api = await createTestApi()
   try {
-    const futureSoonId = insertCompetition(api.database, {
-      deadline: new Date(Date.now() + 60_000).toISOString(),
+    const sameTimeZuluId = insertCompetition(api.database, {
+      id: 'zulu',
+      createdAt: '2026-01-03T00:00:00.000Z',
     })
-    const futureLaterId = insertCompetition(api.database, {
-      deadline: new Date(Date.now() + 120_000).toISOString(),
-    })
-    const expiredOlderId = insertCompetition(api.database, {
+    const newestId = insertCompetition(api.database, {
+      id: 'newest',
+      createdAt: '2026-01-04T00:00:00.000Z',
       deadline: new Date(Date.now() - 120_000).toISOString(),
     })
-    const expiredRecentId = insertCompetition(api.database, {
-      deadline: new Date(Date.now() - 60_000).toISOString(),
+    const sameTimeAlphaId = insertCompetition(api.database, {
+      id: 'alpha',
+      createdAt: '2026-01-03T00:00:00.000Z',
+      deadline: new Date(Date.now() + 120_000).toISOString(),
+    })
+    const oldestId = insertCompetition(api.database, {
+      id: 'oldest',
+      createdAt: '2026-01-02T00:00:00.000Z',
+      deadline: new Date(Date.now() + 60_000).toISOString(),
     })
 
     const response = await fetch(`${api.baseUrl}/api/competitions`)
@@ -137,11 +145,7 @@ test('public competition list puts open registrations before expired ones', asyn
 
     assert.deepEqual(
       body.items.map((item) => item.id),
-      [futureSoonId, futureLaterId, expiredOlderId, expiredRecentId],
-    )
-    assert.deepEqual(
-      body.items.map((item) => item.registrationOpen),
-      [true, true, false, false],
+      [newestId, sameTimeAlphaId, sameTimeZuluId, oldestId],
     )
   } finally {
     await api.close()

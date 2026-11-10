@@ -93,19 +93,14 @@ export function createPublicCompetitionsRouter(database: DatabaseSync): Router {
 
   router.get('/', (_request, response) => {
     const now = Date.now()
-    const nowIso = new Date(now).toISOString()
     const rows = database
       .prepare(
         `SELECT id, title, summary, rules, registration_deadline, status, created_at, updated_at
          FROM competitions
          WHERE status = 'published'
-         ORDER BY
-           CASE WHEN registration_deadline > ? THEN 0 ELSE 1 END ASC,
-           registration_deadline ASC,
-           created_at DESC,
-           id ASC`,
+         ORDER BY created_at DESC, id ASC`,
       )
-      .all(nowIso)
+      .all()
 
     const items = rows.map((row) =>
       toPublicCompetition(mapCompetition(row), now),
