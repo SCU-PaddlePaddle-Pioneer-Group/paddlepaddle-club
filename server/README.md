@@ -37,6 +37,7 @@ npm.cmd run dev
 - `POST /api/admin/login`、`GET /api/admin/me`、`POST /api/admin/logout`：管理员登录态；失效 logout 返回 `401 UNAUTHENTICATED` 并清 Cookie。
 - 管理员比赛接口均已实现：`GET/POST /api/admin/competitions`、`PATCH /api/admin/competitions/:id`；列表外层为 `items`，创建/更新外层为 `item`。
 - 管理员报名接口均已实现：`GET /api/admin/competitions/:id/registrations`、`PATCH /api/admin/registrations/:id`；列表外层为 `items`，更新结果外层为 `item`，报名状态为 `pending`、`confirmed`、`rejected`。
+- 管理员创建/编辑比赛时，规则字段最多 10,000 个字符；JSON 请求体上限为 64 KiB，以支持中文规则文本达到字段长度上限。
 - 未登录的管理请求返回 `401`；未实现路径返回统一 JSON `404`。
 - 错误响应格式为 `{"error":{"code":"...","message":"..."}}`。已使用的代码包括 `VALIDATION_ERROR`、`ORIGIN_NOT_ALLOWED`、`UNAUTHENTICATED`、`INVALID_CREDENTIALS`、`COMPETITION_NOT_FOUND`、`REGISTRATION_NOT_FOUND`、`NOT_FOUND`、`DUPLICATE_REGISTRATION`、`REGISTRATION_CLOSED`、`RATE_LIMITED`、`PAYLOAD_TOO_LARGE`、`INTERNAL_ERROR` 和 `SERVICE_UNAVAILABLE`。
 - 报名管理状态为 `pending`、`confirmed`、`rejected`；已失效登录态调用 logout 返回 `401 UNAUTHENTICATED` 并清除 Cookie。

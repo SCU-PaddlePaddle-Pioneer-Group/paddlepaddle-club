@@ -372,3 +372,59 @@ test('authenticated admin can create, publish, and inspect registrations', async
     await api.close()
   }
 })
+
+test('competition rules accept 10,000 Chinese characters and reject 10,001', async () => {
+  const api = await createTestApi()
+  try {
+    const login = await fetch(`${api.baseUrl}/api/admin/login`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        origin: allowedOrigin,
+      },
+      body: JSON.stringify({
+        username: 'test-admin',
+        password: 'test-password-123',
+      }),
+    })
+    const cookie = sessionCookie(login)
+    const competition = {
+      title: 'Chinese rules boundary test',
+      summary: 'Test summary',
+      rules: '规'.repeat(10_000),
+      registrationDeadline: new Date(Date.now() + 60_000).toISOString(),
+    }
+
+    const accepted = await fetch(`${api.baseUrl}/api/admin/competitions`, {
+      method: 'POST',
+      headers: {
+        cookie,
+        origin: allowedOrigin,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(competition),
+    })
+    assert.equal(accepted.status, 201)
+    const acceptedBody = (await accepted.json()) as {
+      item: { rules: string }
+    }
+    assert.equal(acceptedBody.item.rules.length, 10_000)
+
+    const rejected = await fetch(`${api.baseUrl}/api/admin/competitions`, {
+      method: 'POST',
+      headers: {
+        cookie,
+        origin: allowedOrigin,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ ...competition, rules: '规'.repeat(10_001) }),
+    })
+    assert.equal(rejected.status, 400)
+    const rejectedBody = (await rejected.json()) as {
+      error: { code: string }
+    }
+    assert.equal(rejectedBody.error.code, 'VALIDATION_ERROR')
+  } finally {
+    await api.close()
+  }
+})

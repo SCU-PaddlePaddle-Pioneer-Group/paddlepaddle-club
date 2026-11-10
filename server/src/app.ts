@@ -17,7 +17,7 @@ export function createApp(database: DatabaseSync, options: AppOptions) {
   const app = express()
 
   app.disable('x-powered-by')
-  app.use(express.json({ limit: '16kb' }))
+  app.use(express.json({ limit: '64kb' }))
   app.use(
     session({
       name: 'club.sid',
