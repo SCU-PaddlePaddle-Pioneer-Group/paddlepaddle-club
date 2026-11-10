@@ -72,6 +72,15 @@ function destroySession(request: Request): Promise<void> {
   })
 }
 
+function clearSessionCookie(response: Response, cookieSecure: boolean): void {
+  response.clearCookie('club.sid', {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: cookieSecure,
+    path: '/',
+  })
+}
+
 export function createAdminAuthRouter(
   database: DatabaseSync,
   cookieSecure: boolean,
@@ -153,16 +162,12 @@ export function createAdminAuthRouter(
 
   router.post('/logout', async (request: Request, response: Response) => {
     if (!request.session.adminId) {
+      clearSessionCookie(response, cookieSecure)
       throw new ApiError(401, 'UNAUTHENTICATED', '请先登录')
     }
 
     await destroySession(request)
-    response.clearCookie('club.sid', {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: cookieSecure,
-      path: '/',
-    })
+    clearSessionCookie(response, cookieSecure)
     response.status(200).json({ ok: true })
   })
 

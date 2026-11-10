@@ -111,6 +111,19 @@ test('admin session login, current-user lookup, and logout work', async () => {
       0,
     )
 
+    const staleLogout = await fetch(`${api.baseUrl}/api/admin/logout`, {
+      method: 'POST',
+      headers: { cookie, origin: allowedOrigin },
+    })
+    assert.equal(staleLogout.status, 401)
+    assert.equal(
+      ((await staleLogout.json()) as { error: { code: string } }).error.code,
+      'UNAUTHENTICATED',
+    )
+    const clearedCookie = staleLogout.headers.get('set-cookie')
+    assert.ok(clearedCookie?.startsWith('club.sid=;'))
+    assert.ok(clearedCookie?.includes('Expires='))
+
     const afterLogout = await fetch(`${api.baseUrl}/api/admin/me`, {
       headers: { cookie },
     })

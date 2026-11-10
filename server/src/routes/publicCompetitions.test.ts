@@ -113,6 +113,41 @@ test('public competition endpoints only expose published competitions', async ()
   }
 })
 
+test('public competition list puts open registrations before expired ones', async () => {
+  const api = await createTestApi()
+  try {
+    const futureSoonId = insertCompetition(api.database, {
+      deadline: new Date(Date.now() + 60_000).toISOString(),
+    })
+    const futureLaterId = insertCompetition(api.database, {
+      deadline: new Date(Date.now() + 120_000).toISOString(),
+    })
+    const expiredOlderId = insertCompetition(api.database, {
+      deadline: new Date(Date.now() - 120_000).toISOString(),
+    })
+    const expiredRecentId = insertCompetition(api.database, {
+      deadline: new Date(Date.now() - 60_000).toISOString(),
+    })
+
+    const response = await fetch(`${api.baseUrl}/api/competitions`)
+    assert.equal(response.status, 200)
+    const body = (await response.json()) as {
+      items: Array<{ id: string; registrationOpen: boolean }>
+    }
+
+    assert.deepEqual(
+      body.items.map((item) => item.id),
+      [futureSoonId, futureLaterId, expiredOlderId, expiredRecentId],
+    )
+    assert.deepEqual(
+      body.items.map((item) => item.registrationOpen),
+      [true, true, false, false],
+    )
+  } finally {
+    await api.close()
+  }
+})
+
 test('registration normalizes email and rejects duplicate submissions', async () => {
   const api = await createTestApi()
   try {

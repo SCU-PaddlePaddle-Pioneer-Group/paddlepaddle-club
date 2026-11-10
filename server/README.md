@@ -13,12 +13,13 @@ npm run dev
 默认监听 `http://127.0.0.1:3001`，默认数据库文件为 `server/data/club.sqlite`。首次启动会自动创建目录、数据库并应用尚未执行的迁移。
 
 - `GET /api/health`：HTTP 服务和 SQLite 查询都成功时返回 `200 {"status":"ok"}`；数据库不可用时返回 `503`。
-- `GET /api/competitions`、`GET /api/competitions/:id`：只读取已发布比赛。
+- `GET /api/competitions`、`GET /api/competitions/:id`：只读取已发布比赛；列表先显示尚未截止的比赛，再按截止时间升序，已截止赛事排后。
 - `POST /api/competitions/:id/registrations`：校验报名信息、比赛状态和截止时间，成功后写入 SQLite；重复邮箱报名返回 `409`。
 - `POST /api/admin/login`、`GET /api/admin/me`、`POST /api/admin/logout`：管理员登录态。
 - 管理员比赛接口：`GET/POST /api/admin/competitions`、`PATCH /api/admin/competitions/:id`。
 - 管理员报名接口：`GET /api/admin/competitions/:id/registrations`、`PATCH /api/admin/registrations/:id`。
 - 未登录的管理请求返回 `401`；未实现路径返回统一 JSON `404`。
+- 错误响应格式为 `{"error":{"code":"...","message":"..."}}`。已使用的代码包括 `VALIDATION_ERROR`、`ORIGIN_NOT_ALLOWED`、`UNAUTHENTICATED`、`INVALID_CREDENTIALS`、`COMPETITION_NOT_FOUND`、`REGISTRATION_NOT_FOUND`、`NOT_FOUND`、`DUPLICATE_REGISTRATION`、`REGISTRATION_CLOSED`、`RATE_LIMITED`、`PAYLOAD_TOO_LARGE`、`INTERNAL_ERROR` 和 `SERVICE_UNAVAILABLE`。
 
 首次启动前复制 `.env.example` 为 `.env`，将 `SESSION_SECRET` 替换为本机随机生成的至少 32 字节秘密（例如 `openssl rand -hex 32`）。不要把 `.env` 或其内容提交到 Git。首次管理员通过 `npm run db:create-admin` 在交互式终端设置；密码输入不会回显，也不要发给 AI。
 
