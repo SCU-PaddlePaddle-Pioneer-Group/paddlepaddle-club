@@ -77,8 +77,13 @@ export function createApp(database: DatabaseSync, options: AppOptions) {
       error: unknown,
       _request: express.Request,
       response: express.Response,
-      _next: express.NextFunction,
+      next: express.NextFunction,
     ) => {
+      if (response.headersSent) {
+        next(error)
+        return
+      }
+
       if (error instanceof ApiError) {
         response.status(error.status).json({
           error: {
