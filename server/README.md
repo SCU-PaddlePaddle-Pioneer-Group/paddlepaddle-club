@@ -2,6 +2,10 @@
 
 当前提供 SQLite 数据库初始化、公开赛事查询/报名，以及管理员登录、比赛管理和报名管理 API。
 
+在 Windows PowerShell 中按以下步骤安装、配置并启动后端（需要 Node.js `>=22.13`）。`.env` 配置只需首次创建；迁移可安全重跑。若只测试公开赛事接口，可跳过创建管理员的步骤。
+
+**终端 1：后端安装、初始化和开发启动**
+
 ```powershell
 Set-Location 'D:\AAAcode storage total\paddle\paddlepaddle-club\server'
 node --version
@@ -14,16 +18,25 @@ npm.cmd run db:create-admin
 npm.cmd run dev
 ```
 
-默认监听 `http://127.0.0.1:3001`，默认数据库文件为 `server/data/club.sqlite`。首次启动会自动创建目录、数据库并应用尚未执行的迁移。
+将刚才生成的随机值填入本地 `.env` 的 `SESSION_SECRET` 后保存。不要分享密钥或管理员密码；创建管理员时在交互终端输入密码且不会回显。首次启动会自动创建数据库目录、数据库并应用尚未执行的迁移。
 
-要求 Node.js `>=22.13`。编辑 `.env` 时将生成的随机值填入 `SESSION_SECRET`；不要分享该值。`npm.cmd` 可避免 PowerShell 执行策略拦截 `npm.ps1`。`db:create-admin` 只在要测试管理接口时需要，密码在交互终端输入且不回显；公开接口测试可跳过。
+**终端 2：B 配置好 `/api` 代理后运行前端**
+
+```powershell
+Set-Location 'D:\AAAcode storage total\paddle\paddlepaddle-club'
+npm.cmd ci
+npm.cmd run dev
+```
+
+使用 `npm.cmd` 可避免 PowerShell 执行策略拦截 `npm.ps1`。前端开发地址为 `http://localhost:3000`，后端默认监听 `http://127.0.0.1:3001`，数据库默认为 `server/data/club.sqlite`。由 B 配置 Vite `/api` 代理，并与 C 在浏览器验证 `http://localhost:3000/api/health` 能访问后端。
 
 - `GET /api/health`：HTTP 服务和 SQLite 查询都成功时返回 `200 {"status":"ok"}`；数据库不可用时返回 `503`。
-- `GET /api/competitions`、`GET /api/competitions/:id`：只读取已发布比赛；列表按 `createdAt` 倒序，同时间按 `id` 升序，A 首页从中取前 3 条。
-- `POST /api/competitions/:id/registrations`：校验报名信息、比赛状态和截止时间，成功后写入 SQLite；重复邮箱报名返回 `409`。
-- `POST /api/admin/login`、`GET /api/admin/me`、`POST /api/admin/logout`：管理员登录态。
-- 管理员比赛接口：`GET/POST /api/admin/competitions`、`PATCH /api/admin/competitions/:id`。
-- 管理员报名接口：`GET /api/admin/competitions/:id/registrations`、`PATCH /api/admin/registrations/:id`。
+- `GET /api/competitions`：只返回已发布比赛，响应外层为 `{ "items": [...] }`；按 `createdAt DESC`、同时间 `id ASC`。首页取前 3 条，所需 `id`、`title`、`summary`、`registrationDeadline`、`status` 均已包含。
+- `GET /api/competitions/:id`：公开比赛详情响应外层为 `{ "item": {...} }`。
+- `POST /api/competitions/:id/registrations`：校验报名信息、比赛状态和截止时间，成功后写入 SQLite，返回 `201 { "item": {...} }` 和真实报名 ID；重复邮箱报名返回 `409`。
+- `POST /api/admin/login`、`GET /api/admin/me`、`POST /api/admin/logout`：管理员登录态；失效 logout 返回 `401 UNAUTHENTICATED` 并清 Cookie。
+- 管理员比赛接口均已实现：`GET/POST /api/admin/competitions`、`PATCH /api/admin/competitions/:id`；列表外层为 `items`，创建/更新外层为 `item`。
+- 管理员报名接口均已实现：`GET /api/admin/competitions/:id/registrations`、`PATCH /api/admin/registrations/:id`；列表外层为 `items`，更新结果外层为 `item`，报名状态为 `pending`、`confirmed`、`rejected`。
 - 未登录的管理请求返回 `401`；未实现路径返回统一 JSON `404`。
 - 错误响应格式为 `{"error":{"code":"...","message":"..."}}`。已使用的代码包括 `VALIDATION_ERROR`、`ORIGIN_NOT_ALLOWED`、`UNAUTHENTICATED`、`INVALID_CREDENTIALS`、`COMPETITION_NOT_FOUND`、`REGISTRATION_NOT_FOUND`、`NOT_FOUND`、`DUPLICATE_REGISTRATION`、`REGISTRATION_CLOSED`、`RATE_LIMITED`、`PAYLOAD_TOO_LARGE`、`INTERNAL_ERROR` 和 `SERVICE_UNAVAILABLE`。
 - 报名管理状态为 `pending`、`confirmed`、`rejected`；已失效登录态调用 logout 返回 `401 UNAUTHENTICATED` 并清除 Cookie。
@@ -37,9 +50,9 @@ SQLite 使用 Node.js 内置的 `node:sqlite`，不需要单独安装或注册�
 构建并运行：
 
 ```powershell
-npm test
-npm run build
-npm start
+npm.cmd test
+npm.cmd run build
+npm.cmd start
 ```
 
-`npm run db:migrate` 可安全重复运行。服务启动时也会自动应用未执行的迁移。
+这些命令在 `server/` 目录运行。开发模式使用 `npm.cmd run dev`；`npm.cmd start` 运行前需先 `npm.cmd run build`。`npm.cmd run db:migrate` 可安全重复运行。服务启动时也会自动应用未执行的迁移。
