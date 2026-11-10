@@ -98,7 +98,7 @@ function parseCompetitionInput(
     result.summary = parseText(fields.summary, '比赛简介', 1000)
   }
   if (!partial || 'rules' in fields) {
-    result.rules = parseText(fields.rules, '比赛规则', 10000)
+    result.rules = parseText(fields.rules, '比赛规则', 10_000)
   }
   if (!partial || 'registrationDeadline' in fields) {
     result.registrationDeadline = parseDeadline(fields.registrationDeadline)
