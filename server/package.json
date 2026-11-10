@@ -6,17 +6,20 @@
     "node": ">=22.13"
   },
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "node --env-file-if-exists=.env --import tsx --watch src/index.ts",
     "build": "tsc -p tsconfig.json",
-    "db:migrate": "tsx src/db/migrate-cli.ts",
-    "start": "node dist/index.js",
-    "test": "tsx --test src/db/migrate.test.ts src/routes/publicCompetitions.test.ts"
+    "db:migrate": "node --env-file-if-exists=.env --import tsx src/db/migrate-cli.ts",
+    "db:create-admin": "node --env-file-if-exists=.env --import tsx src/scripts/createAdmin.ts",
+    "start": "node --env-file-if-exists=.env dist/index.js",
+    "test": "tsx --test src/**/*.test.ts"
   },
   "dependencies": {
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "express-session": "^1.19.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
+    "@types/express-session": "^1.19.0",
     "@types/node": "^24.10.1",
     "tsx": "^4.20.6",
     "typescript": "~5.9.3"

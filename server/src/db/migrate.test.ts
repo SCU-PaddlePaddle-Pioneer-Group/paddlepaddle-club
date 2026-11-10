@@ -39,7 +39,7 @@ test('rerunning migrations preserves existing records', () => {
       database
         .prepare('SELECT COUNT(*) AS count FROM schema_migrations')
         .get()?.count,
-      1,
+      2,
     )
   } finally {
     database.close()

@@ -11,7 +11,9 @@ async function createTestApi() {
   const database = openDatabase(':memory:')
   applyMigrations(database)
 
-  const server = createApp(database).listen(0, '127.0.0.1')
+  const server = createApp(database, {
+    sessionSecret: 'test-only-session-secret-that-is-long-enough',
+  }).listen(0, '127.0.0.1')
   await once(server, 'listening')
 
   const address = server.address() as AddressInfo

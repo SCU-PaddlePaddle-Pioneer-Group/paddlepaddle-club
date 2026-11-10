@@ -1,13 +1,39 @@
 import express from 'express'
 import type { DatabaseSync } from 'node:sqlite'
+import session from 'express-session'
+import { SQLiteSessionStore } from './auth/sqliteSessionStore.js'
 import { ApiError } from './errors.js'
+import { createAdminOriginMiddleware } from './middleware/verifyAdminOrigin.js'
+import { createAdminAuthRouter } from './routes/adminAuth.js'
 import { createPublicCompetitionsRouter } from './routes/publicCompetitions.js'
 
-export function createApp(database: DatabaseSync) {
+export interface AppOptions {
+  sessionSecret: string
+  cookieSecure?: boolean
+  allowedOrigins?: string[]
+}
+
+export function createApp(database: DatabaseSync, options: AppOptions) {
   const app = express()
 
   app.disable('x-powered-by')
   app.use(express.json({ limit: '16kb' }))
+  app.use(
+    session({
+      name: 'club.sid',
+      secret: options.sessionSecret,
+      store: new SQLiteSessionStore(database),
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: options.cookieSecure ?? false,
+        maxAge: 8 * 60 * 60 * 1000,
+        path: '/',
+      },
+    }),
+  )
 
   app.get('/api/health', (_request, response) => {
     try {
@@ -23,6 +49,17 @@ export function createApp(database: DatabaseSync) {
       })
     }
   })
+
+  app.use(
+    '/api/admin',
+    createAdminOriginMiddleware(
+      options.allowedOrigins ?? [
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+      ],
+    ),
+    createAdminAuthRouter(database, options.cookieSecure ?? false),
+  )
 
   app.use('/api/competitions', createPublicCompetitionsRouter(database))
 
@@ -61,6 +98,21 @@ export function createApp(database: DatabaseSync) {
           error: {
             code: 'VALIDATION_ERROR',
             message: '请求内容不是有效的 JSON',
+          },
+        })
+        return
+      }
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'status' in error &&
+        error.status === 413
+      ) {
+        response.status(413).json({
+          error: {
+            code: 'PAYLOAD_TOO_LARGE',
+            message: '请求内容过大',
           },
         })
         return
