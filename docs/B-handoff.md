@@ -1,78 +1,59 @@
-# B 周二交接：参赛页面与公共工具
+# B 交接：赛事前台、公共工具与接口契约
 
-日期：2026-11-10。分支 `feat/b-competition-pages`，PR 目标 `develop`。以 AGENTS.md 的本周边界为准。
+更新：2026-11-10。开发分支 `feat/b-competition-pages`，PR 目标 `develop`。新版契约在 `docs/api.md`，请使用本分支的最新提交，旧版 data 包装已废弃。
 
-## 范围和状态
+## 当前交付与边界
 
-完成今日开发准备：接口草案、公共请求工具、可配置代理、列表/详情/表单及独立开发预览。**本次不是周三的真实报名入库交付**；C 的真实接口、团队契约确认、A 的正式路由接入仍待完成。
+- 列表、详情和个人报名表单初版，包含加载/空态/错误、北京时间、截止、提交中禁用及结果处理。
+- 公共请求工具、可配置 /api 代理、独立开发预览、项目内接口文档。
+- 已同步 develop 中 D 的已合并交付，未改 D 页面或样本源文件；开发预览复用该共用样本的 published 子集。
+- 没有改 A 的 App.tsx、导航、首页或 competition-preview.ts；没有把 C 的 server/ 未合并代码带进 B 的 PR。
+- 本人已验证上一版开发预览；本次 items/item 改动与真实后台验证结果见文末，不能将上一版模拟验收视为真实入库验收。
 
-没有修改 A 的 App.tsx、Header.tsx、Home.tsx、CompetitionPreview.tsx 或临时 competition-preview.ts，也没有修改 server/ 或 D 的管理页面。不新增依赖，不替换技术栈，不新增本周范围外功能。
+## A：路由与首页接入
 
-## 给 A：两个默认导出组件
+默认导出：
 
 ```tsx
 import CompetitionList from '@/pages/competitions/CompetitionList'
 import CompetitionDetail from '@/pages/competitions/CompetitionDetail'
 ```
 
-由 A 将已经存在的 `/competitions` element 替换为 `<CompetitionList />`，`/competitions/:id` 替换为 `<CompetitionDetail />`。保留原路由地址，不重复注册路由；两页自身不包含全站 Header/Footer。
+由 A 将现有 `/competitions`、`/competitions/:id` 的占位 element 换成这两个组件，保留原路由；不要重复注册。
+首页复用工具时：`const payload = await apiRequest<{items:unknown[]}>('/competitions',{signal})`；保留 A 的字段校验，从 payload.items 取前 3 条，保持后台顺序。
+旧的 `{data:[]}` 已失效，A 适配前首页会继续报错，这是待接入项，不要用假数据掩盖。
 
-公共工具可供首页适配层使用：
+## C：已静态核对的接入点
 
-```ts
-import { apiRequest } from '@/lib/api'
-const data = await apiRequest<unknown>('/competitions', { signal })
-// 返回已拆出的 data；保留现有首页字段校验和取前 3 条行为。
-```
+对照提交 `3322669a1f1c787f9f830ee53ee54ac95089df4a`：公开列表 items，详情/报名 item，UUID 字符串 id，赛事 createdAt DESC/id ASC，错误 error.code/message，姓名 80/邮箱 254，公开接口 registrationOpen。
+后台已有公开接口、认证和管理接口源码；有完整 server/README.md Windows 命令。源码存在不等于运行验收完成，具体测试证据见文末。
 
-B 没有擅自替换 A 的适配层。正式站的赛事入口在 A 接入前仍显示占位，与独立预览不同。
+## D：请求工具约定
 
-## 给 C：优先确认再分批联调
+- `apiRequest<T>` 路径不含 /api，返回完整 JSON；按 response.items/item/admin/ok 读取，不再拆 data。
+- body 传对象，工具发送 JSON，Cookie 同源携带。保护页面监听 `ADMIN_UNAUTHORIZED_EVENT` 并回登录；登录接口 401 不触发事件，D 应展示登录错误。
+- C 登录/me 返回 admin，logout 返回 200 `{ok:true}`，失效 logout 401 并清 Cookie。
+- D 仍需确认并完成管理端真实绑定。D 样本文案中的组队、作品/OJ 不代表本周加入这些功能。
 
-请看 docs/api.md 第 1 节并回复：成功包装、id、排序、输入长度、报名返回字段/错误码、Cookie 策略、后台端口和启动命令。列表沿用 A 预留的 `{data:[...]}`，不是另起一套结构。
+## B 本机运行与验收入口
 
-交付顺序：公开列表/详情 → 报名 → 登录 → 管理接口。公开查询可用即开始接入，不等待全部后台完成。周三目标必须提供真实数据库中与页面编号一致的报名记录。
-
-## 给 D：工具与前端运行信息
-
-- `apiRequest<T>` 路径不含 /api；body 传对象，工具发送 JSON；same-origin Cookie 自动携带。
-- 用 `ApiError.status/code/message` 区分错误。仅管理请求 401 发 `ADMIN_UNAUTHORIZED_EVENT`；D 负责页面级回登录，不在公开页面强制登录。
-- Node 22.12 或更高兼容版本；`npm ci`、`npm run dev`；检查 `npm run lint`、`npm run build`。
-- `.env.example` 展示代理变量，C 确认后写入不提交的 `.env.local`，重启 Vite；无后台时真实接口模式应失败。
-- 本机在 C 盘工作，云盘发生过大量依赖写入失败；建议在普通本地目录开发。本机预览端口 3011 是运行参数，不写入团队默认配置。
-
-## 给本人：今天只验证这些
-
-打开 `/src/pages/competitions/__dev__/preview.html?source=sample#/competitions`：
-
-1. 顶部清晰写着“示例数据，不会真实报名”。
-2. 两场示例比赛可以打开，详情含简介、规则、北京时间截止日期。
-3. 空姓名/错误邮箱有提示；只用“演示同学”和 demo@example.com 试填。
-4. 有效填写后点提交，显示“开发预览，报名未发送、未保存”，不能出现成功编号。
-5. 已截止示例能读规则，表单禁用；返回列表和刷新详情正常。
-6. 缩窄窗口检查排版。切换真实接口模式，未接后台时看到失败提示是当前预期。
-
-## 每日同步草稿（由本人确认后发给队友）
-
-完成：B 的接口草案、公共请求工具、可配置 /api 代理及列表/详情/报名页面开发预览。原站已跑通。
-
-验证：原站由本人验证；新增页面的技术检查和模拟测试结果见下方记录，真实接口/数据库尚未验收。
-
-阻碍：需要 C 核对接口并提供后台地址/启动方式/可联调时间，A 接入正式路由，A/D 确认共用字段与模拟数据。
-
-下一步：C 交付公开接口即接列表和详情；报名接口一到即核对数据库编号，周三晚争取真实入库。
+前端 Node 22.13+；`npm.cmd ci`、`npm.cmd run dev`；`.env.local` 设置 API_PROXY_TARGET=http://127.0.0.1:3001，修改后重启。不要提交 .env.local。
+普通开发入口 3000；历史本机预览 3011 可保留，但管理写操作请按 C 允许的 3000 origin 联调。
+独立预览 `/src/pages/competitions/__dev__/preview.html?source=sample#/competitions` 显示共用样本，写入明确拒绝。
+切换 source=live 后请求真实后台；正式官网路由仍等待 A 接入。
 
 ## 验证记录
 
-本轮验证完成（2026-11-10）：
+上一阶段：lint/build、17 组模拟浏览器检查及本人开发预览验收通过；阶段提交 4e054f6 已推送。该记录仅为旧 data 草案时期的模拟验证。
 
-- `npm run lint`：通过。
-- `npm run build`：通过，含新增页面 TypeScript 检查。正式构建不含开发预览入口、示例赛事和 PREVIEW_ONLY 模拟逻辑。
-- 浏览器检查 17 组全部通过，未捕获页面 JavaScript 异常：示例列表/详情、模拟预览拒绝写入、截止禁用、390px 布局/详情刷新、加载/空列表、500/重试、非 JSON/非公开数据、404、表单校验、提交中禁用/邮箱规范化/测试响应编号、重复/截止/下架/断网/无效回执、Cookie/管理 401 事件/204/超时、旧站回归。
-- 已查看桌面列表/详情、手机列表/详情截图，无明显溢出和重叠。
-- 可配置 /api 代理：临时本地测试服务验证了路径、POST 内容、Cookie、Origin/Host 保留；没有连接 C 的真实后台。
-- 旧站回归包括首页、动态列表、文章详情、关于和正式赛事占位页。A 负责的文件保持原样。
-- 浏览器检查使用测试拦截和虚构数据；外部字体请求在测试中隔离，页面加载以内容就绪为准。没有把截图中的测试报名编号当成真实入库。
-- 本地检查脚本与结果：`.temp/b-day1-smoke.cjs`、`.temp/proxy-check.cjs`、`.temp/b-checks/result.json` 及 PNG 截图；均为本机临时验证产物，不提交仓库。脚本使用 Codex 自带浏览器测试依赖，没有修改 package.json/lockfile；其他电脑可按上述手动步骤验收。
+本次契约更新验证（2026-11-10）：
 
-待确认：本人对新增页面的浏览器验收；C/A/D 对 docs/api.md 草案的确认；C 的真实接口/数据库校验；A 的正式路由与首页公共工具接入。每日同步中的完成范围仅指今日前台开发准备，不代表 B1-B8 的最终真实后台验收已完成。
+- 前端 npm run lint / npm run build 通过；已同步 develop 的 D 模块也通过检查。
+- 定向浏览器检查通过：旧 data 外层拒绝、items/item 与 UUID 字符串 id、health/admin/ok 完整响应、登录凭据错误与会话失效事件区分、共用 published 样本、390px 无溢出、模拟报名明确拒绝。
+- C 运行副本固定为 3322669a1f1c787f9f830ee53ee54ac95089df4a，独立目录构建成功，未修改后台源码；全新本地 SQLite，仅合成管理员和虚构报名，不使用已有业务数据库。
+- 8 组真实核心流程自动检查通过：localhost:3000/api/health 转发 3001 并执行 SQLite 查询；登录 admin 包装；草稿不可见/发布/排序；B 独立 live 预览真实提交；重复/截止/下架拒绝；编辑刷新与报名处理状态；重启后台持久化；退出后管理接口 401 且公开响应无报名隐私。
+- 真实报名回执编号 19abab0e-e3c8-4f97-b35d-bca3c1854915 已与数据库同一记录核对，状态通过管理 API 改为 confirmed 后重启仍保留。已查看真实提交页面截图。
+- 管理操作由测试脚本调用真实管理 API；没有把 D 页面或 A 首页/正式路由接入说成已完成。新真实流程仍需本人及 A 最终人工验收。
+- 证据在本机 .temp/live-contract-checks/result.json、real-registration.png、contract-regression-result.json；脚本、截图、数据库和秘密配置均不提交仓库。
+
+尚未完成 A/D 正式页面接入后的全组真实联调及人工最终验收。可向团队报告本机 B+C 核心接口已验证，但不能报告整站 Demo 已全部通过。

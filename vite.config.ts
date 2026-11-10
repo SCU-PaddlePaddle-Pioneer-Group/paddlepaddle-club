@@ -5,7 +5,7 @@ import { inspectAttr } from 'kimi-plugin-inspect-react'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  // Set only after C confirms the backend address. No fake success fallback.
+  // Team convention: frontend 3000 -> backend 3001; target stays configurable.
   const target = process.env.API_PROXY_TARGET || env.API_PROXY_TARGET
   if (target) {
     const url = new URL(target)
@@ -18,6 +18,7 @@ export default defineConfig(({ mode }) => {
     plugins: [inspectAttr(), react()],
     server: {
       port: 3000,
+      strictPort: true,
       proxy: target ? { '/api': { target, changeOrigin: false } } : undefined,
     },
     resolve: { alias: { '@': path.resolve(__dirname, './src') } },

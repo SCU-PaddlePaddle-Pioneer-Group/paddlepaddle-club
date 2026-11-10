@@ -14,8 +14,8 @@ export function installPreviewMock() {
       request.signal.addEventListener('abort', cancel, { once: true })
     })
     if (request.method !== 'GET') return Response.json({ error: { code: 'PREVIEW_ONLY', message: '这是开发预览，报名未发送、未保存。请等待真实后台接通后验证。' } }, { status: 409 })
-    if (url.pathname === '/api/competitions') return Response.json({ data: sampleCompetitions })
+    if (url.pathname === '/api/competitions') return Response.json({ items: sampleCompetitions })
     const item = sampleCompetitions.find(value => url.pathname === `/api/competitions/${value.id}`)
-    return item ? Response.json({ data: item }) : Response.json({ error: { code: 'COMPETITION_NOT_FOUND', message: '赛事不存在或已下架。' } }, { status: 404 })
+    return item ? Response.json({ item }) : Response.json({ error: { code: 'COMPETITION_NOT_FOUND', message: '赛事不存在或已下架。' } }, { status: 404 })
   }
 }

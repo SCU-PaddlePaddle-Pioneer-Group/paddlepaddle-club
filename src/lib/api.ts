@@ -1,4 +1,4 @@
-/** Shared same-origin API transport. Contract: docs/api.md (pending team approval). */
+/** Shared same-origin JSON transport. Returns the full response; see docs/api.md. */
 export class ApiError extends Error {
   readonly status: number
   readonly code: string
@@ -20,7 +20,7 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
 }
 
-/** Paths omit /api. Never retries a write request automatically. */
+/** Paths omit /api. Returns { items }, { item }, { admin }, etc. without unwrapping. */
 export async function apiRequest<T>(path: string, options: ApiOptions = {}): Promise<T> {
   if (!path.startsWith('/') || path.startsWith('//') || path.includes('://')) {
     throw new ApiError('接口地址配置错误。', 0, 'INVALID_PATH')
@@ -47,23 +47,23 @@ export async function apiRequest<T>(path: string, options: ApiOptions = {}): Pro
       signal: controller.signal,
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     })
-    if (response.status === 401 && path.startsWith('/admin/')) {
-      window.dispatchEvent(new Event(ADMIN_UNAUTHORIZED_EVENT))
-    }
     if (response.status === 204 && response.ok) return undefined as T
     const payload: unknown = await response.json().catch(() => null)
     if (!response.ok) {
       const error = isObject(payload) && isObject(payload.error) ? payload.error : null
       const code = typeof error?.code === 'string' ? error.code : `HTTP_${response.status}`
+      if (response.status === 401 && path.startsWith('/admin/') && path !== '/admin/login') {
+        window.dispatchEvent(new Event(ADMIN_UNAUTHORIZED_EVENT))
+      }
       const message = response.status >= 500
         ? '服务暂时不可用，请稍后重试。'
         : typeof error?.message === 'string' ? error.message : '请求未完成，请稍后重试。'
       throw new ApiError(message, response.status, code)
     }
-    if (!isObject(payload) || !('data' in payload)) {
+    if (!isObject(payload)) {
       throw new ApiError('返回的数据格式不正确，请稍后重试。', response.status, 'INVALID_RESPONSE')
     }
-    return payload.data as T
+    return payload as T
   } catch (error) {
     if (error instanceof ApiError) throw error
     if (signal?.aborted) throw error

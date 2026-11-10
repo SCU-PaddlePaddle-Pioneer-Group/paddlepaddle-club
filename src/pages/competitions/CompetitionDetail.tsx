@@ -22,7 +22,7 @@ function DetailContent({ id }: { id: string }) {
     const timer = window.setInterval(() => setNow(Date.now()), 1000)
     return () => window.clearInterval(timer)
   }, [])
-  const closed = state.kind === 'ready' && Date.parse(state.item.registrationDeadline) <= now
+  const closed = state.kind === 'ready' && (state.item.registrationOpen === false || Date.parse(state.item.registrationDeadline) <= now)
   return <section className="container-x py-16 md:py-24">
     <Link to="/competitions" className="link-slide text-sm text-muted-foreground">← 返回赛事列表</Link>
     <div className="mt-10" aria-busy={state.kind === 'loading'}>
@@ -38,7 +38,7 @@ function DetailContent({ id }: { id: string }) {
           <h1 className="section-title break-words">{state.item.title}</h1>
           <p className="section-desc break-words">{state.item.summary}</p>
           <p className="mt-6 font-mono text-sm text-muted-foreground">报名截止（北京时间） <time dateTime={state.item.registrationDeadline}>{formatDeadline(state.item.registrationDeadline)}</time></p>
-          <p className="mt-3 font-semibold text-primary" role="status">{closed ? '报名已截止' : '报名时间内，是否可报名以提交时后台校验为准'}</p>
+          <p className="mt-3 font-semibold text-primary" role="status">{closed ? '报名已截止' : '报名时间内，请阅读规则后填写报名信息'}</p>
         </header>
         <div className="mt-12 grid gap-12 border-t border-border pt-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <section aria-labelledby="rules-title" className="min-w-0"><h2 id="rules-title" className="text-2xl font-bold">比赛规则</h2>

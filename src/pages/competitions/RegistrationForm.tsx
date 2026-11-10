@@ -61,6 +61,6 @@ export default function RegistrationForm({ competitionId, closed }: { competitio
       <button type="submit" className="btn-primary disabled:cursor-not-allowed">{pending ? '正在提交…' : closed || unavailable ? '当前不可报名' : '提交报名'} <span aria-hidden="true">→</span></button>
     </fieldset>
     {error && <p id="registration-error" role="alert" className="mt-5 break-words text-sm text-accent">{error}</p>}
-    <p className="mt-4 text-sm text-muted-foreground">提交是否成功以服务器返回结果为准。</p>
+    <p className="mt-4 text-sm text-muted-foreground">报名成功后请保存编号，勿重复提交。</p>
   </form>
 }
