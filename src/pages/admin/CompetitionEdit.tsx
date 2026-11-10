@@ -4,7 +4,7 @@
  *   /admin/competitions/:id/edit     编辑（含发布 / 下架操作占位）
  * 骨架阶段数据来自统一模拟数据；提交与状态操作不伪造成功，仅显示「未接入」提示。
  */
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -58,22 +58,39 @@ export default function CompetitionEdit() {
     [id],
   )
 
+  /** 编辑模式的原始本地时间串，用于判断「时间未修改」沿用原值（PR #14 复查意见） */
+  const initialDeadlineLocal = useMemo(
+    () => (competition ? isoToLocalInputValue(competition.registrationDeadline) : ''),
+    [competition],
+  )
+
+  const defaultValues = useMemo<EditValues>(
+    () =>
+      competition
+        ? {
+            title: competition.title,
+            summary: competition.summary,
+            rules: competition.rules,
+            registrationDeadline: isoToLocalInputValue(competition.registrationDeadline),
+          }
+        : { title: '', summary: '', rules: '', registrationDeadline: '' },
+    [competition],
+  )
+
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<EditValues>({
     resolver: zodResolver(editSchema),
-    // TODO(D3): 接真实接口后，须在数据加载完成时 reset 表单，而非仅在首渲染取默认值。
-    defaultValues: competition
-      ? {
-          title: competition.title,
-          summary: competition.summary,
-          rules: competition.rules,
-          registrationDeadline: isoToLocalInputValue(competition.registrationDeadline),
-        }
-      : { title: '', summary: '', rules: '', registrationDeadline: '' },
+    defaultValues,
   })
+
+  // 同组件内 :id 变化不重挂载（如 /new → /comp-001/edit），显式重置表单（D3：保存后重新打开一致）
+  useEffect(() => {
+    reset(defaultValues)
+  }, [defaultValues, reset])
 
   if (isEdit && !competition) {
     return (
@@ -87,12 +104,19 @@ export default function CompetitionEdit() {
   }
 
   const onSubmit = (values: EditValues) => {
-    // 截止时间：datetime-local 无时区值 → UTC ISO 8601（按北京时间解释）。
+    // 截止时间（PR #14 复查意见）：
+    // 1) 编辑时时间未修改 → 沿用原值原字符串，避免只改标题也改动截止时间；
+    // 2) 修改过 → datetime-local 无时区值按北京时间 +08:00 转 UTC ISO 8601。
     // TODO(D3/D4): 接 B 的 api.ts 后，POST / PATCH 时直接提交该 ISO 值。
-    const deadlineIso = isoFromLocalInput(values.registrationDeadline)
-    if (!deadlineIso) {
-      setNotice('报名截止时间无效：请重新选择。')
-      return
+    let deadlineIso: string
+    if (isEdit && competition && values.registrationDeadline === initialDeadlineLocal) {
+      deadlineIso = competition.registrationDeadline
+    } else {
+      deadlineIso = isoFromLocalInput(values.registrationDeadline)
+      if (!deadlineIso) {
+        setNotice('报名截止时间无效：请重新选择。')
+        return
+      }
     }
     setNotice(
       `「${isEdit ? '保存修改' : '新建草稿'}」后台接口未接入：骨架阶段不提交数据。` +
@@ -162,10 +186,10 @@ export default function CompetitionEdit() {
             比赛简介
           </label>
           <textarea
-            id="competition-rules"
-            maxLength={10000}
+            id="competition-summary"
+            maxLength={1000}
             className={textareaClass}
-            {...register('rules')}
+            {...register('summary')}
           />
           {errors.summary && (
             <p className="mt-1.5 text-[13px] text-accent">{errors.summary.message}</p>
@@ -176,7 +200,12 @@ export default function CompetitionEdit() {
           <label htmlFor="competition-rules" className={labelClass}>
             比赛规则
           </label>
-          <textarea id="competition-rules" className={textareaClass} {...register('rules')} />
+          <textarea
+            id="competition-rules"
+            maxLength={10000}
+            className={textareaClass}
+            {...register('rules')}
+          />
           {errors.rules && <p className="mt-1.5 text-[13px] text-accent">{errors.rules.message}</p>}
         </div>
 
@@ -187,6 +216,7 @@ export default function CompetitionEdit() {
           <input
             id="competition-deadline"
             type="datetime-local"
+            step={1}
             className={inputClass}
             {...register('registrationDeadline')}
           />

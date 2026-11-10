@@ -120,9 +120,28 @@ export function formatBeijingTime(iso: string): string {
     .replaceAll('/', '-')
 }
 
-/** ISO 8601 → datetime-local 输入框值（北京时间，YYYY-MM-DDTHH:mm） */
+/**
+ * ISO 8601 → datetime-local 输入框值（北京时间，YYYY-MM-DDTHH:mm:ss）。
+ * 保留秒数（PR #14 复查意见：编辑保存不丢秒），配合输入框 step=1 使用。
+ */
 export function isoToLocalInputValue(iso: string): string {
-  return formatBeijingTime(iso).replace(' ', 'T')
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return ''
+  return (
+    new Intl.DateTimeFormat('zh-CN', {
+      timeZone: 'Asia/Shanghai',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    })
+      .format(date)
+      .replaceAll('/', '-')
+      .replace(' ', 'T')
+  )
 }
 
 /**
