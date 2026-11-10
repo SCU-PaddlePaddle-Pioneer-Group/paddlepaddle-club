@@ -17,6 +17,10 @@ desktop.ini
 *.log
 *.tmp
 /.temp/
+/server/.env
+/server/.env.*
+!/server/.env.example
+/server/data/
 
 # ===== Python 缓存（legacy/scripts 工具运行时产生，不入库）=====
 __pycache__/
