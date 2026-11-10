@@ -170,11 +170,24 @@ test('registration normalizes email and rejects duplicate submissions', async ()
 
     assert.equal(firstResponse.status, 201)
     const first = (await firstResponse.json()) as {
-      item: { id: string; status: string; email?: string }
+      item: {
+        id: string
+        competitionId: string
+        status: string
+        createdAt: string
+        email?: string
+      }
     }
     assert.ok(first.item.id)
+    assert.equal(first.item.competitionId, competitionId)
     assert.equal(first.item.status, 'pending')
+    assert.ok(first.item.createdAt)
     assert.equal('email' in first.item, false)
+    const storedRegistration = api.database
+      .prepare('SELECT id, competition_id FROM registrations')
+      .get()
+    assert.equal(storedRegistration?.id, first.item.id)
+    assert.equal(storedRegistration?.competition_id, first.item.competitionId)
 
     const duplicateResponse = await fetch(
       `${api.baseUrl}/api/competitions/${competitionId}/registrations`,
