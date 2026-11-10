@@ -3,8 +3,9 @@ import AboutSection from '@/components/home/AboutSection'
 import DepartmentsSection from '@/components/home/DepartmentsSection'
 import FeedSection from '@/components/home/FeedSection'
 import JoinSection from '@/components/home/JoinSection'
+import CompetitionPreview from '@/components/home/CompetitionPreview'
 
-/** 首页：Hero → 关于我们 → 三大部门 → 社团动态预览 → 加入我们（DESIGN.md §首页区块，顺序固定）。 */
+/** 保留原区块顺序，在社团动态之后增加赛事预览。 */
 export default function Home() {
   return (
     <>
@@ -12,6 +13,7 @@ export default function Home() {
       <AboutSection />
       <DepartmentsSection />
       <FeedSection />
+      <CompetitionPreview />
       <JoinSection />
     </>
   )

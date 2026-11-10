@@ -15,13 +15,14 @@ import {
 
 const NAV_ITEMS = [
   { to: '/', label: '首页' },
+  { to: '/competitions', label: '赛事中心' },
   { to: '/posts', label: '社团动态' },
   { to: '/about', label: '关于社团' },
 ] as const
 
 /** 当前路由高亮：首页精确匹配（锚点不高亮），其余按前缀匹配。 */
 function isActivePath(pathname: string, to: string): boolean {
-  return to === '/' ? pathname === '/' : pathname.startsWith(to)
+  return to === '/' ? pathname === '/' : pathname === to || pathname.startsWith(`${to}/`)
 }
 
 export default function Header() {
@@ -42,13 +43,14 @@ export default function Header() {
         </Link>
 
         {/* 桌面导航 */}
-        <nav className="hidden items-center gap-8 md:flex" aria-label="主导航">
+        <nav className="hidden items-center gap-6 lg:flex" aria-label="主导航">
           {NAV_ITEMS.map((item) => {
             const active = isActivePath(pathname, item.to)
             return (
               <Link
                 key={item.to}
                 to={item.to}
+                aria-current={active ? 'page' : undefined}
                 className={cn(
                   'link-slide text-[15px] font-medium transition-colors duration-200',
                   active ? 'is-active text-foreground' : 'text-foreground/70 hover:text-foreground',
@@ -67,7 +69,7 @@ export default function Header() {
         </nav>
 
         {/* 移动端汉堡菜单 */}
-        <div className="md:hidden">
+        <div className="lg:hidden">
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <button
@@ -92,6 +94,7 @@ export default function Header() {
                     <SheetClose asChild key={item.to}>
                       <Link
                         to={item.to}
+                        aria-current={active ? 'page' : undefined}
                         className={cn(
                           'link-slide w-fit font-display text-[19px] font-semibold transition-colors duration-200',
                           active ? 'is-active text-foreground' : 'text-foreground/70 hover:text-foreground',
