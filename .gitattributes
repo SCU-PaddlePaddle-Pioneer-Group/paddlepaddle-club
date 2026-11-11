@@ -1,0 +1,29 @@
+# 文本行结束符与类型约定（issue #26）：文本一律 LF，二进制不做转换。
+# 仅声明规则，不批量重写既有文件；已跟踪文件在下次修改时自然规范化。
+
+# 文本：一律 LF
+*.md   text eol=lf
+*.ts   text eol=lf
+*.tsx  text eol=lf
+*.js   text eol=lf
+*.json text eol=lf
+*.css  text eol=lf
+*.html text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.sh   text eol=lf
+*.sql  text eol=lf
+
+# Windows 脚本保持 CRLF
+*.bat  text eol=crlf
+*.ps1  text eol=crlf
+
+# 二进制
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.ico    binary
+*.webp   binary
+*.sqlite binary
+*.db     binary
