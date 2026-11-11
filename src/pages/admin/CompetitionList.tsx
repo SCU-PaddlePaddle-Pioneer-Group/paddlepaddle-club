@@ -1,22 +1,45 @@
 /**
- * 比赛管理列表页（D2 骨架）：路由 /admin/competitions。
- * 展示全部状态（draft / published / offline）的比赛，可进入编辑与新建。
- * 骨架阶段数据来自统一模拟数据，不做伪造的成功操作。
+ * 比赛管理列表页（D2）：路由 /admin/competitions。
+ * 真实接口：GET /api/admin/competitions（含全部状态），401 由会话守卫跳登录。
+ * 加载 / 空列表 / 失败可重试三种状态完整；数据以后台为准，不做本地过滤。
  */
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router'
-import { MOCK_COMPETITIONS, formatBeijingTime } from '@/mocks/competitions'
+import { apiRequest, ApiError } from '@/lib/api'
+import { formatBeijingTime, type Competition } from '@/mocks/competitions'
+import { useAdminSessionGuard } from './useAdminSession'
 import { AdminPageHeader, CompetitionStatusBadge } from './shared'
 
 const thClass =
   'py-3 pr-6 align-bottom font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground'
 const tdClass = 'py-4 pr-6 align-middle text-sm text-foreground'
 
-/**
- * 比赛管理列表（D2 骨架）。
- * 数据源：统一模拟数据；接口就绪后替换为 GET /api/admin/competitions。
- */
 export default function CompetitionList() {
-  const competitions = MOCK_COMPETITIONS
+  useAdminSessionGuard()
+  const [competitions, setCompetitions] = useState<Competition[] | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
+
+  useEffect(() => {
+    let cancelled = false
+    apiRequest<{ items: Competition[] }>('/admin/competitions')
+      .then((response) => {
+        if (!cancelled) setCompetitions(response.items)
+      })
+      .catch((cause: unknown) => {
+        if (!cancelled) setError(cause instanceof ApiError ? cause.message : '请求未完成，请稍后重试。')
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [reloadKey])
+
+  // 重置动作放在事件处理器，effect 内仅发起异步请求（react-hooks/set-state-in-effect）
+  const retry = useCallback(() => {
+    setCompetitions(null)
+    setError(null)
+    setReloadKey((key) => key + 1)
+  }, [])
 
   return (
     <section className="container-x py-16 md:py-24">
@@ -35,10 +58,31 @@ export default function CompetitionList() {
       />
 
       <div className="mt-12 overflow-x-auto">
-        {competitions.length === 0 ? (
+        {error !== null ? (
+          <div className="border-t border-border py-10">
+            <p className="text-sm text-accent">{error}</p>
+            <button
+              type="button"
+              onClick={retry}
+              className="link-slide mt-4 font-mono text-[13px] text-muted-foreground transition-colors duration-200 hover:text-primary"
+            >
+              重试 →
+            </button>
+          </div>
+        ) : competitions === null ? (
           <p className="border-t border-border py-10 font-mono text-sm text-muted-foreground">
-            暂无比赛。
+            正在加载比赛数据…
           </p>
+        ) : competitions.length === 0 ? (
+          <div className="border-t border-border py-10">
+            <p className="font-mono text-sm text-muted-foreground">暂无比赛。</p>
+            <Link
+              to="/admin/competitions/new"
+              className="link-slide mt-4 inline-block font-mono text-[13px] text-muted-foreground transition-colors duration-200 hover:text-primary"
+            >
+              新建第一场比赛 →
+            </Link>
+          </div>
         ) : (
           <table className="w-full min-w-[640px] border-collapse text-left">
             <thead>
@@ -79,10 +123,6 @@ export default function CompetitionList() {
           </table>
         )}
       </div>
-
-      <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-        骨架版本 · 数据为统一模拟数据，发布 / 下架操作在编辑页
-      </p>
     </section>
   )
 }

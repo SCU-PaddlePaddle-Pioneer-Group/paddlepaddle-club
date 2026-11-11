@@ -1,16 +1,18 @@
 /**
- * 管理员登录页（D1/D6 骨架）：路由 /admin/login。
- * 骨架阶段不执行真实登录——等待 docs/api.md 定稿后接 B 的 src/lib/api.ts。
- * 不伪造成功：提交仅显示「未接入」提示，不做任何跳转或成功反馈。
+ * 管理员登录页（D1/D6）：路由 /admin/login。
+ * 真实接口：POST /api/admin/login（C 已实现）；成功由后台设置 HttpOnly Cookie 后跳比赛管理。
+ * 失败按 error.code 映射文案（errorMessages.ts），不匹配 message；凭据错误留在登录页。
+ * 401 UNAUTHENTICATED 类失效由 api.ts 统一派发事件、受保护页守卫处理（useAdminSession.ts）。
  */
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { AdminPageHeader } from './shared'
+import { apiRequest, ApiError } from '@/lib/api'
+import { loginErrorMessage } from './errorMessages'
 
 const loginSchema = z.object({
-  // TODO(D1): 字段名与请求体以 docs/api.md 定稿为准（当前约定 POST /api/admin/login）
   username: z.string().min(1, '请输入管理员账号'),
   password: z.string().min(1, '请输入密码'),
 })
@@ -26,7 +28,8 @@ const labelClass =
   'mb-2 block font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground'
 
 export default function Login() {
-  const [notice, setNotice] = useState<string | null>(null)
+  const navigate = useNavigate()
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const {
     register,
     handleSubmit,
@@ -36,18 +39,31 @@ export default function Login() {
     defaultValues: { username: '', password: '' },
   })
 
-  const onSubmit = () => {
-    // TODO(D1/D6): 调用 POST /api/admin/login；成功保存会话并跳转，失败按
-    // errorMessages.ts 的 loginErrorMessage(code) 展示（INVALID_CREDENTIALS /
-    // RATE_LIMITED / ORIGIN_NOT_ALLOWED / INTERNAL_ERROR），401 UNAUTHENTICATED
-    // 类失效由 api.ts 统一拦截跳登录页。骨架阶段一律不显示成功状态（细则：失败不得显示成功）。
-    setNotice('后台接口未接入：骨架阶段不执行真实登录，等待 docs/api.md 与 src/lib/api.ts 就绪。')
+  const onSubmit = async (values: LoginValues) => {
+    setSubmitError(null)
+    try {
+      await apiRequest<{ admin: { id: string; username: string } }>('/admin/login', {
+        method: 'POST',
+        body: { username: values.username, password: values.password },
+      })
+      navigate('/admin/competitions', { replace: true })
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setSubmitError(loginErrorMessage(error.code))
+        return
+      }
+      setSubmitError('登录失败，请稍后重试。')
+    }
   }
 
   return (
     <section className="container-x py-16 md:py-24">
       <div className="mx-auto w-full max-w-md">
-        <AdminPageHeader title="管理员登录" desc="赛事管理后台仅限社团管理员使用。" />
+        <header className="mt-10">
+          <p className="section-eyebrow">管理后台 / ADMIN</p>
+          <h1 className="section-title">管理员登录</h1>
+          <p className="section-desc">赛事管理后台仅限社团管理员使用。</p>
+        </header>
 
         <form className="mt-12 space-y-6" onSubmit={handleSubmit(onSubmit)} noValidate>
           <div>
@@ -82,9 +98,9 @@ export default function Login() {
             )}
           </div>
 
-          {notice && (
+          {submitError && (
             <p className="border border-accent/50 bg-accent/5 px-4 py-3 text-[13px] leading-relaxed text-accent">
-              {notice}
+              {submitError}
             </p>
           )}
 
@@ -93,12 +109,12 @@ export default function Login() {
             disabled={isSubmitting}
             className="btn-primary w-full justify-center disabled:pointer-events-none disabled:opacity-50"
           >
-            登录
+            {isSubmitting ? '登录中…' : '登录'}
           </button>
         </form>
 
         <p className="mt-8 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-          骨架版本 · 权限校验以后台会话为准
+          会话有效期 8 小时 · 权限校验以后台为准
         </p>
       </div>
     </section>
