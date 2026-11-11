@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto'
 import { Router } from 'express'
 import type { Request, Response } from 'express'
+import type { RequestHandler } from 'express'
 import type { DatabaseSync, SQLOutputValue } from 'node:sqlite'
 import { ApiError } from '../errors.js'
-import { requireAdmin } from '../middleware/requireAdmin.js'
 
 type CompetitionStatus = 'draft' | 'published' | 'offline'
 type RegistrationStatus = 'pending' | 'confirmed' | 'rejected'
@@ -157,7 +157,10 @@ function readRegistrationStatus(value: unknown): RegistrationStatus {
   return value
 }
 
-export function createAdminManagementRouter(database: DatabaseSync): Router {
+export function createAdminManagementRouter(
+  database: DatabaseSync,
+  requireAdmin: RequestHandler,
+): Router {
   const router = Router()
   router.use('/competitions', requireAdmin)
   router.use('/registrations', requireAdmin)

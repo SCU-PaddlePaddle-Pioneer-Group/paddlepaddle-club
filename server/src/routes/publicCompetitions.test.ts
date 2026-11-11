@@ -6,14 +6,22 @@ import test from 'node:test'
 import { createApp } from '../app.js'
 import { openDatabase } from '../db/database.js'
 import { applyMigrations } from '../db/migrate.js'
+import type { RegistrationRateLimitOptions } from '../middleware/registrationRateLimit.js'
 
-async function createTestApi() {
+async function createTestApi(options: {
+  registrationLimits?: Partial<RegistrationRateLimitOptions>
+  trustProxy?: boolean
+} = {}) {
   const database = openDatabase(':memory:')
   applyMigrations(database)
-
-  const server = createApp(database, {
+  const app = createApp(database, {
     sessionSecret: 'test-only-session-secret-that-is-long-enough',
-  }).listen(0, '127.0.0.1')
+    registrationLimits: options.registrationLimits,
+  })
+  if (options.trustProxy) {
+    app.set('trust proxy', 1)
+  }
+  const server = app.listen(0, '127.0.0.1')
   await once(server, 'listening')
 
   const address = server.address() as AddressInfo
@@ -306,6 +314,123 @@ test('invalid registration input returns a JSON validation error', async () => {
       },
     )
     assert.equal(extraFieldResponse.status, 400)
+  } finally {
+    await api.close()
+  }
+})
+
+test('registration limits isolate source and competition budgets', async () => {
+  const api = await createTestApi({
+    trustProxy: true,
+    registrationLimits: {
+      windowMs: 60_000,
+      maxPerSource: 3,
+      maxPerCompetition: 2,
+      maxPerSourceCompetition: 1,
+    },
+  })
+  try {
+    const competitionA = insertCompetition(api.database)
+    const competitionB = insertCompetition(api.database)
+    const competitionC = insertCompetition(api.database)
+    const submit = (
+      competitionId: string,
+      email: string,
+      source: string,
+    ) =>
+      fetch(
+        `${api.baseUrl}/api/competitions/${competitionId}/registrations`,
+        {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'x-forwarded-for': source,
+          },
+          body: JSON.stringify({ name: 'Test attendee', email }),
+        },
+      )
+
+    assert.equal(
+      (await submit(competitionA, 'a1@example.edu', '198.51.100.10')).status,
+      201,
+    )
+    const sameSourceCompetition = await submit(
+      competitionA,
+      'a2@example.edu',
+      '198.51.100.10',
+    )
+    assert.equal(sameSourceCompetition.status, 429)
+    assert.ok(Number(sameSourceCompetition.headers.get('retry-after')) >= 1)
+
+    assert.equal(
+      (await submit(competitionB, 'b1@example.edu', '198.51.100.10')).status,
+      201,
+    )
+    assert.equal(
+      (await submit(competitionA, 'a3@example.edu', '198.51.100.11')).status,
+      201,
+    )
+    const competitionLimit = await submit(
+      competitionA,
+      'a4@example.edu',
+      '198.51.100.12',
+    )
+    assert.equal(competitionLimit.status, 429)
+    assert.ok(Number(competitionLimit.headers.get('retry-after')) >= 1)
+
+    assert.equal(
+      (await submit(competitionB, 'b2@example.edu', '198.51.100.12')).status,
+      201,
+    )
+    const sourceLimit = await submit(
+      competitionC,
+      'c1@example.edu',
+      '198.51.100.10',
+    )
+    assert.equal(sourceLimit.status, 429)
+
+    assert.equal(
+      api.database
+        .prepare('SELECT COUNT(*) AS count FROM registrations')
+        .get()?.count,
+      4,
+    )
+  } finally {
+    await api.close()
+  }
+})
+
+test('expired registration limits recover and allow new registrations', async () => {
+  const api = await createTestApi({
+    registrationLimits: {
+      windowMs: 60,
+      maxPerSource: 1,
+      maxPerCompetition: 2,
+      maxPerSourceCompetition: 1,
+    },
+  })
+  try {
+    const competitionId = insertCompetition(api.database)
+    const submit = (email: string) =>
+      fetch(
+        `${api.baseUrl}/api/competitions/${competitionId}/registrations`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ name: 'Test attendee', email }),
+        },
+      )
+
+    assert.equal((await submit('first@example.edu')).status, 201)
+    assert.equal((await submit('blocked@example.edu')).status, 429)
+    await new Promise((resolve) => setTimeout(resolve, 80))
+    assert.equal((await submit('after-expiry@example.edu')).status, 201)
+    assert.equal(
+      api.database
+        .prepare('SELECT COUNT(*) AS count FROM registrations')
+        .get()?.count,
+      2,
+    )
   } finally {
     await api.close()
   }
