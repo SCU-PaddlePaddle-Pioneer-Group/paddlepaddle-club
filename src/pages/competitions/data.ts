@@ -1,21 +1,18 @@
 import { apiRequest, ApiError } from '@/lib/api'
 
-export interface Competition {
-  id: string
-  title: string
-  summary: string
-  registrationDeadline: string
-  status: 'published'
-  registrationOpen?: boolean
-}
-export interface CompetitionDetail extends Competition { rules: string }
-export interface RegistrationInput { name: string; email: string }
-export interface RegistrationReceipt {
-  id: string
-  competitionId: string
-  status: 'pending'
-  createdAt: string
-}
+import type {
+  PublicCompetition as Competition,
+  PublicCompetitionDetail as CompetitionDetail,
+  RegistrationInput,
+  RegistrationReceipt,
+} from '@/types/competition'
+
+export type {
+  PublicCompetition as Competition,
+  PublicCompetitionDetail as CompetitionDetail,
+  RegistrationInput,
+  RegistrationReceipt,
+} from '@/types/competition'
 
 function object(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object'
@@ -46,7 +43,7 @@ export async function getCompetitions(signal?: AbortSignal): Promise<Competition
 export async function getCompetition(id: string, signal?: AbortSignal): Promise<CompetitionDetail> {
   const payload = await apiRequest<unknown>(`/competitions/${encodeURIComponent(id)}`, { signal })
   const data = object(payload) ? payload.item : undefined
-  if (!competition(data) || !object(data) || typeof data.rules !== 'string' || String(data.id) !== id) invalid()
+  if (!competition(data) || !('rules' in data) || typeof data.rules !== 'string' || String(data.id) !== id) invalid()
   return data as unknown as CompetitionDetail
 }
 export async function register(id: string, input: RegistrationInput, signal?: AbortSignal): Promise<RegistrationReceipt> {

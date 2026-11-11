@@ -11,13 +11,8 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { apiRequest, ApiError } from '@/lib/api'
-import {
-  formatBeijingTime,
-  isoFromLocalInput,
-  isoToLocalInputValue,
-  type Competition,
-  type CompetitionStatus,
-} from '@/mocks/competitions'
+import { formatBeijingTime, isoFromLocalInput, isoToLocalInputValue } from '@/lib/competition-time'
+import type { Competition, CompetitionStatus } from '@/types/competition'
 import { useAdminSessionGuard } from './useAdminSession'
 import { AdminPageHeader, CompetitionStatusBadge } from './shared'
 
