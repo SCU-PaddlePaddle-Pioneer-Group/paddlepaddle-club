@@ -3,7 +3,7 @@
  * 只复用 index.css 组件类与设计令牌；本文件仅导出组件（react-refresh 约束）。
  */
 import type { ReactNode } from 'react'
-import type { CompetitionStatus, RegistrationStatus } from '@/mocks/competitions'
+import type { CompetitionStatus, RegistrationStatus } from '@/types/competition'
 
 /** 三行式题头，右侧可放页面级操作（如「新建比赛」按钮） */
 export function AdminPageHeader({

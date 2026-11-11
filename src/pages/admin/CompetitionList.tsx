@@ -6,7 +6,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { apiRequest, ApiError } from '@/lib/api'
-import { formatBeijingTime, type Competition } from '@/mocks/competitions'
+import { formatBeijingTime } from '@/lib/competition-time'
+import type { Competition } from '@/types/competition'
 import { useAdminSessionGuard } from './useAdminSession'
 import { AdminPageHeader, CompetitionStatusBadge } from './shared'
 

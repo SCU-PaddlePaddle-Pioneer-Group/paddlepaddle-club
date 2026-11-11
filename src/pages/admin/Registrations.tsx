@@ -7,12 +7,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { apiRequest, ApiError } from '@/lib/api'
-import {
-  formatBeijingTime,
-  type Competition,
-  type Registration,
-  type RegistrationStatus,
-} from '@/mocks/competitions'
+import { formatBeijingTime } from '@/lib/competition-time'
+import type { Competition, Registration, RegistrationStatus } from '@/types/competition'
 import { useAdminSessionGuard } from './useAdminSession'
 import {
   AdminPageHeader,
