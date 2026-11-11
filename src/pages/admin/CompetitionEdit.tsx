@@ -140,11 +140,27 @@ export default function CompetitionEdit() {
     register,
     handleSubmit,
     reset,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<EditValues>({
     resolver: zodResolver(editSchema),
     defaultValues,
   })
+
+  /**
+   * 是否存在未保存修改（PR #18 复查意见）：
+   * 文本以 trim 后与后台已存版本比较（与保存行为一致），时间与原本地串比较。
+   */
+  const hasUnsavedChanges = useCallback((): boolean => {
+    if (!isEdit || !competition) return false
+    const values = getValues()
+    return (
+      values.title.trim() !== competition.title ||
+      values.summary.trim() !== competition.summary ||
+      values.rules.trim() !== competition.rules ||
+      values.registrationDeadline !== initialDeadlineLocal
+    )
+  }, [competition, getValues, initialDeadlineLocal, isEdit])
 
   // 同组件内 :id 变化不重挂载（如 /new → /comp-001/edit），数据到位后显式重置表单（D3）
   useEffect(() => {
@@ -154,6 +170,14 @@ export default function CompetitionEdit() {
   const changeStatus = useCallback(
     async (status: CompetitionStatus) => {
       if (!competition) return
+      // PR #18 复查意见：存在未保存修改时阻止发布/下架，避免输入被静默覆盖
+      if (hasUnsavedChanges()) {
+        setNotice({
+          tone: 'warning',
+          text: '有未保存的修改：请先点「保存修改」，再发布或下架。',
+        })
+        return
+      }
       setActionPending(true)
       setNotice(null)
       try {
@@ -178,7 +202,7 @@ export default function CompetitionEdit() {
         setActionPending(false)
       }
     },
-    [competition],
+    [competition, hasUnsavedChanges],
   )
 
   const onSubmit = async (values: EditValues) => {
