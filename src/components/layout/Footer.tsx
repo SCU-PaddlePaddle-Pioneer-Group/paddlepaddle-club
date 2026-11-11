@@ -1,4 +1,5 @@
 import { CLUB } from '@/data/club'
+import { Link } from 'react-router'
 
 export default function Footer() {
   return (
@@ -21,6 +22,7 @@ export default function Footer() {
               招新 QQ 群 <span className="font-mono tracking-[0.08em] text-white">{CLUB.links.qqGroup}</span>
             </p>
             <p className="text-white/60">微信公众号「{CLUB.links.wechat}」</p>
+            <Link to="/admin/login" className="link-slide w-fit text-white/60 hover:text-white">管理员入口</Link>
           </div>
         </div>
         <div className="mt-14 border-t border-white/10 pt-6 font-mono text-[12px] tracking-[0.04em] text-white/50">
