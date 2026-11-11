@@ -110,12 +110,20 @@ export default function CompetitionList() {
                     {formatBeijingTime(competition.updatedAt)}
                   </td>
                   <td className={tdClass}>
-                    <Link
-                      to={`/admin/competitions/${competition.id}/edit`}
-                      className="link-slide font-mono text-[13px] text-muted-foreground transition-colors duration-200 hover:text-primary"
-                    >
-                      编辑 →
-                    </Link>
+                    <div className="flex items-center gap-4">
+                      <Link
+                        to={`/admin/competitions/${competition.id}/edit`}
+                        className="link-slide font-mono text-[13px] text-muted-foreground transition-colors duration-200 hover:text-primary"
+                      >
+                        编辑 →
+                      </Link>
+                      <Link
+                        to={`/admin/competitions/${competition.id}/registrations`}
+                        className="link-slide font-mono text-[13px] text-muted-foreground transition-colors duration-200 hover:text-primary"
+                      >
+                        报名 →
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))}
