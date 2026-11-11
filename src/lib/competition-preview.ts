@@ -1,40 +1,11 @@
-/** A 模块的临时接入层；B 提供公共请求工具后，在此替换请求实现。 */
-export interface CompetitionPreviewItem {
-  id: string | number
-  title: string
-  summary: string
-  registrationDeadline: string
-  status: 'published'
-}
+import { getCompetitions } from '@/pages/competitions/data'
+import type { Competition } from '@/pages/competitions/data'
 
-function isCompetition(value: unknown): value is CompetitionPreviewItem {
-  if (!value || typeof value !== 'object') return false
-  const item = value as Record<string, unknown>
-  return (
-    ((typeof item.id === 'string' && item.id.trim().length > 0) ||
-      (typeof item.id === 'number' && Number.isFinite(item.id))) &&
-    typeof item.title === 'string' && item.title.trim().length > 0 &&
-    typeof item.summary === 'string' &&
-    typeof item.registrationDeadline === 'string' &&
-    Number.isFinite(Date.parse(item.registrationDeadline)) &&
-    item.status === 'published'
-  )
-}
+export type CompetitionPreviewItem = Pick<Competition,
+  'id' | 'title' | 'summary' | 'registrationDeadline' | 'status'>
 
-/** 暂定响应为 { data: CompetitionPreviewItem[] }，保留后台返回的排序。 */
+/** 复用 B 的 items 契约、字段校验与公共请求工具，保留后台排序。 */
 export async function getCompetitionPreview(signal: AbortSignal): Promise<CompetitionPreviewItem[]> {
-  const response = await fetch('/api/competitions', {
-    signal,
-    cache: 'no-store',
-    headers: { Accept: 'application/json' },
-  })
-  if (!response.ok) throw new Error('赛事暂时无法加载，请稍后重试。')
-  const payload: unknown = await response.json()
-  if (!payload || typeof payload !== 'object' || !('data' in payload) || !Array.isArray(payload.data)) {
-    throw new Error('赛事数据暂时无法读取，请稍后重试。')
-  }
-  if (!payload.data.every(isCompetition)) {
-    throw new Error('赛事数据暂时无法读取，请稍后重试。')
-  }
-  return payload.data.slice(0, 3)
+  const competitions = await getCompetitions(signal)
+  return competitions.slice(0, 3)
 }

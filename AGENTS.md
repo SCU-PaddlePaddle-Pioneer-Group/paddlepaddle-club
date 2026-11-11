@@ -23,9 +23,9 @@
 - 优先在负责目录新增文件；跨模块修改先与负责人协调，不重写他人模块。
 - A 已预留赛事和管理页面地址。B、D 交付真实页面和导出名称，由 A 替换 `App.tsx` 对应占位 element，不重复声明相同路由。
 - `ModulePending` 只是占位，不是认证或报名实现；接入真实页面后删除不再使用的占位引用。
-- A 的 `src/lib/competition-preview.ts` 是临时适配层，B 提供公共工具后在此适配，不另建第二套全局请求系统。
-- 当前公开赛事请求暂定 `GET /api/competitions`，响应 `{ data: [...] }`。字段包括 id、title、summary、registrationDeadline、status。后台只返回 published 数据并排序，首页取前 3 条。
-- B、C 应共同维护 `docs/api.md`（尚待交付），确认字段、排序、认证、请求响应和错误格式；变更同步 A、D。不要把暂定方案当成后台已实现。
+- A 的 `src/lib/competition-preview.ts` 复用 B 的 `getCompetitions` 校验与公共请求工具，不另建请求系统。
+- 公开赛事列表返回 `{ items: [...] }`，详情和报名返回 `{ item: ... }`，id 为非空字符串。后台只返回 published 数据，按 createdAt DESC、id ASC 排序；首页保留顺序取前 3 条。
+- 已交付的 `docs/api.md` 为 B/C 接口契约，旧 data 草案已废弃；变更同步 A/B/C/D。赛事正式路由已接入，管理路由仍待 D 的真实认证和接口交付。
 
 ## 实现和验证
 
