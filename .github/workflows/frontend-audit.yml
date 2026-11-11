@@ -1,0 +1,36 @@
+name: Frontend dependency audit
+on:
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - package.json
+      - package-lock.json
+      - .github/workflows/frontend-audit.yml
+  push:
+    branches: [develop, main]
+    paths:
+      - package.json
+      - package-lock.json
+      - .github/workflows/frontend-audit.yml
+  schedule:
+    - cron: '20 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'schedule' && 'develop' || github.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=moderate
+      - name: Audit all dependencies including build tools
+        if: ${{ !cancelled() }}
+        run: npm audit --audit-level=high
