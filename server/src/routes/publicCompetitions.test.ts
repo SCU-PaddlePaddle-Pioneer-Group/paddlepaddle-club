@@ -400,17 +400,20 @@ test('registration limits isolate source and competition budgets', async () => {
   }
 })
 
-test('expired registration limits recover and allow new registrations', async () => {
+test('expired registration limits recover and allow new registrations', async (context) => {
+  context.mock.timers.enable({ apis: ['Date'], now: Date.now() })
   const api = await createTestApi({
     registrationLimits: {
-      windowMs: 60,
+      windowMs: 60_000,
       maxPerSource: 1,
       maxPerCompetition: 2,
       maxPerSourceCompetition: 1,
     },
   })
   try {
-    const competitionId = insertCompetition(api.database)
+    const competitionId = insertCompetition(api.database, {
+      deadline: new Date(Date.now() + 120_000).toISOString(),
+    })
     const submit = (email: string) =>
       fetch(
         `${api.baseUrl}/api/competitions/${competitionId}/registrations`,
@@ -423,7 +426,7 @@ test('expired registration limits recover and allow new registrations', async ()
 
     assert.equal((await submit('first@example.edu')).status, 201)
     assert.equal((await submit('blocked@example.edu')).status, 429)
-    await new Promise((resolve) => setTimeout(resolve, 80))
+    context.mock.timers.tick(60_001)
     assert.equal((await submit('after-expiry@example.edu')).status, 201)
     assert.equal(
       api.database
@@ -431,6 +434,169 @@ test('expired registration limits recover and allow new registrations', async ()
         .get()?.count,
       2,
     )
+  } finally {
+    await api.close()
+  }
+})
+
+async function submitRegistration(
+  baseUrl: string,
+  competitionId: string,
+  source: string,
+) {
+  const response = await fetch(
+    `${baseUrl}/api/competitions/${competitionId}/registrations`,
+    {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-forwarded-for': source,
+      },
+      body: JSON.stringify({
+        name: 'Synthetic attendee',
+        email: `${randomUUID()}@example.edu`,
+      }),
+    },
+  )
+  await response.arrayBuffer()
+  return response
+}
+
+test('source expiry preserves an unexpired single-competition budget', async (context) => {
+  context.mock.timers.enable({ apis: ['Date'], now: Date.now() })
+  const api = await createTestApi({ trustProxy: true })
+  try {
+    const competitionId = insertCompetition(api.database, {
+      deadline: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+    })
+    const submit = (id = competitionId) =>
+      submitRegistration(api.baseUrl, id, '198.51.100.10')
+
+    assert.equal((await submit('missing-event')).status, 404)
+    context.mock.timers.tick(14 * 60 * 1000)
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      assert.equal((await submit()).status, 201)
+    }
+    assert.equal((await submit()).status, 429)
+
+    context.mock.timers.tick(60 * 1000)
+    const stillBlocked = await submit()
+    assert.equal(stillBlocked.status, 429)
+    assert.equal(Number(stillBlocked.headers.get('retry-after')), 14 * 60)
+    assert.equal(
+      api.database.prepare('SELECT COUNT(*) AS count FROM registrations').get()?.count,
+      5,
+    )
+
+    context.mock.timers.tick(14 * 60 * 1000)
+    assert.equal((await submit()).status, 201)
+  } finally {
+    await api.close()
+  }
+})
+
+test('unknown competitions cannot displace a full competition budget', async () => {
+  const api = await createTestApi({
+    trustProxy: true,
+    registrationLimits: {
+      maxTrackedCompetitions: 1,
+      maxPerCompetition: 2,
+      maxPerSourceCompetition: 1,
+    },
+  })
+  try {
+    const competitionId = insertCompetition(api.database)
+    const draftId = insertCompetition(api.database, { status: 'draft' })
+    const offlineId = insertCompetition(api.database, { status: 'offline' })
+    const submit = (id: string, source: string) =>
+      submitRegistration(api.baseUrl, id, source)
+
+    assert.equal((await submit(competitionId, '198.51.100.10')).status, 201)
+    assert.equal((await submit(competitionId, '198.51.100.11')).status, 201)
+    for (const id of ['missing-1', 'missing-2', draftId, offlineId]) {
+      assert.equal((await submit(id, '198.51.100.12')).status, 404)
+    }
+    const blocked = await submit(competitionId, '198.51.100.13')
+    assert.equal(blocked.status, 429)
+    assert.ok(Number(blocked.headers.get('retry-after')) >= 1)
+    assert.equal(
+      api.database.prepare('SELECT COUNT(*) AS count FROM registrations').get()?.count,
+      2,
+    )
+  } finally {
+    await api.close()
+  }
+})
+
+test('source capacity preserves existing budgets and recovers after expiry', async (context) => {
+  context.mock.timers.enable({ apis: ['Date'], now: Date.now() })
+  const api = await createTestApi({
+    trustProxy: true,
+    registrationLimits: {
+      windowMs: 60_000,
+      maxTrackedSources: 2,
+      maxPerCompetition: 10,
+      maxPerSourceCompetition: 1,
+    },
+  })
+  try {
+    const competitionId = insertCompetition(api.database, {
+      deadline: new Date(Date.now() + 120_000).toISOString(),
+    })
+    const submit = (source: string) =>
+      submitRegistration(api.baseUrl, competitionId, source)
+
+    assert.equal((await submit('198.51.100.10')).status, 201)
+    assert.equal((await submit('198.51.100.11')).status, 201)
+    const capacityBlocked = await submit('198.51.100.12')
+    assert.equal(capacityBlocked.status, 429)
+    assert.ok(Number(capacityBlocked.headers.get('retry-after')) >= 1)
+    assert.equal((await submit('198.51.100.10')).status, 429)
+    assert.equal(
+      api.database.prepare('SELECT COUNT(*) AS count FROM registrations').get()?.count,
+      2,
+    )
+
+    context.mock.timers.tick(60_001)
+    assert.equal((await submit('198.51.100.12')).status, 201)
+  } finally {
+    await api.close()
+  }
+})
+
+test('competition capacity preserves active budgets and recovers after expiry', async (context) => {
+  context.mock.timers.enable({ apis: ['Date'], now: Date.now() })
+  const api = await createTestApi({
+    trustProxy: true,
+    registrationLimits: {
+      windowMs: 60_000,
+      maxTrackedCompetitions: 2,
+      maxPerCompetition: 2,
+      maxPerSourceCompetition: 1,
+    },
+  })
+  try {
+    const deadline = new Date(Date.now() + 120_000).toISOString()
+    const competitionA = insertCompetition(api.database, { deadline })
+    const competitionB = insertCompetition(api.database, { deadline })
+    const competitionC = insertCompetition(api.database, { deadline })
+    const submit = (id: string, source: string) =>
+      submitRegistration(api.baseUrl, id, source)
+
+    assert.equal((await submit(competitionA, '198.51.100.10')).status, 201)
+    assert.equal((await submit(competitionA, '198.51.100.11')).status, 201)
+    assert.equal((await submit(competitionB, '198.51.100.12')).status, 201)
+    const capacityBlocked = await submit(competitionC, '198.51.100.13')
+    assert.equal(capacityBlocked.status, 429)
+    assert.ok(Number(capacityBlocked.headers.get('retry-after')) >= 1)
+    assert.equal((await submit(competitionA, '198.51.100.14')).status, 429)
+    assert.equal(
+      api.database.prepare('SELECT COUNT(*) AS count FROM registrations').get()?.count,
+      3,
+    )
+
+    context.mock.timers.tick(60_001)
+    assert.equal((await submit(competitionC, '198.51.100.13')).status, 201)
   } finally {
     await api.close()
   }

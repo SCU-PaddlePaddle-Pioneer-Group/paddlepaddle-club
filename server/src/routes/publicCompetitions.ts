@@ -97,8 +97,13 @@ export function createPublicCompetitionsRouter(
   registrationLimits?: Partial<RegistrationRateLimitOptions>,
 ): Router {
   const router = Router()
-  const registrationRateLimit =
-    createRegistrationRateLimit(registrationLimits)
+  const publicCompetition = database.prepare(
+    "SELECT 1 FROM competitions WHERE id = ? AND status = 'published'",
+  )
+  const registrationRateLimit = createRegistrationRateLimit(
+    (competitionId) => Boolean(publicCompetition.get(competitionId)),
+    registrationLimits,
+  )
 
   router.get('/', (_request, response) => {
     const now = Date.now()

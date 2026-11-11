@@ -21,6 +21,27 @@ interface SourceBuckets {
   competitions: Map<string, RateBucket>
 }
 
+function earliestBucket(buckets: Iterable<RateBucket>): RateBucket {
+  let earliest: RateBucket | undefined
+  for (const bucket of buckets) {
+    if (!earliest || bucket.resetAt < earliest.resetAt) earliest = bucket
+  }
+  if (!earliest) throw new Error('Missing rate limit capacity state')
+  return earliest
+}
+
+function sourceCapacityExpiry(sources: Iterable<SourceBuckets>): number {
+  let earliest = Infinity
+  for (const source of sources) {
+    let expiry = source.total.resetAt
+    for (const bucket of source.competitions.values()) {
+      expiry = Math.max(expiry, bucket.resetAt)
+    }
+    earliest = Math.min(earliest, expiry)
+  }
+  return earliest
+}
+
 const defaultOptions: RegistrationRateLimitOptions = {
   windowMs: 15 * 60 * 1000,
   maxPerSource: 60,
@@ -60,6 +81,7 @@ function reportRateLimit(scope: string, retryAfter: number): void {
 }
 
 export function createRegistrationRateLimit(
+  isPublicCompetition: (competitionId: string) => boolean,
   options: Partial<RegistrationRateLimitOptions> = {},
 ): RequestHandler {
   const limits = { ...defaultOptions, ...options }
@@ -73,18 +95,22 @@ export function createRegistrationRateLimit(
   }
   const sources = new Map<string, SourceBuckets>()
   const competitions = new Map<string, RateBucket>()
+  const capacityBuckets = new Map<string, RateBucket>()
   let nextCleanupAt = 0
+
+  const cleanupSourceCompetitions = (buckets: SourceBuckets, now: number) => {
+    for (const [competitionId, bucket] of buckets.competitions) {
+      if (bucket.resetAt <= now) {
+        buckets.competitions.delete(competitionId)
+      }
+    }
+  }
 
   const cleanup = (now: number) => {
     for (const [source, buckets] of sources) {
-      if (buckets.total.resetAt <= now) {
+      cleanupSourceCompetitions(buckets, now)
+      if (buckets.total.resetAt <= now && buckets.competitions.size === 0) {
         sources.delete(source)
-        continue
-      }
-      for (const [competitionId, bucket] of buckets.competitions) {
-        if (bucket.resetAt <= now) {
-          buckets.competitions.delete(competitionId)
-        }
       }
     }
     for (const [competitionId, bucket] of competitions) {
@@ -116,6 +142,21 @@ export function createRegistrationRateLimit(
     )
   }
 
+  const rejectCapacity = (
+    response: Response,
+    next: NextFunction,
+    now: number,
+    scope: string,
+    getResetAt: () => number,
+  ) => {
+    let bucket = capacityBuckets.get(scope)
+    if (!bucket || bucket.resetAt <= now) {
+      bucket = { count: 0, resetAt: getResetAt(), reported: false }
+      capacityBuckets.set(scope, bucket)
+    }
+    reject(response, next, bucket, now, scope)
+  }
+
   const middleware = (
     request: Request,
     response: Response,
@@ -136,19 +177,24 @@ export function createRegistrationRateLimit(
     const source = request.ip || request.socket.remoteAddress || 'unknown'
     let sourceBuckets = sources.get(source)
     if (!sourceBuckets) {
+      if (
+        sources.size >= limits.maxTrackedSources &&
+        (capacityBuckets.get('source_capacity')?.resetAt ?? 0) <= now
+      ) {
+        cleanup(now)
+      }
       if (sources.size >= limits.maxTrackedSources) {
-        const oldestSource = sources.keys().next().value
-        if (oldestSource !== undefined) {
-          sources.delete(oldestSource)
-        }
+        rejectCapacity(response, next, now, 'source_capacity', () =>
+          sourceCapacityExpiry(sources.values()),
+        )
+        return
       }
       sourceBuckets = {
         total: createBucket(now, limits.windowMs),
         competitions: new Map(),
       }
+      sources.set(source, sourceBuckets)
     }
-    sources.delete(source)
-    sources.set(source, sourceBuckets)
 
     sourceBuckets.total = getActiveBucket(
       sourceBuckets.total,
@@ -161,14 +207,25 @@ export function createRegistrationRateLimit(
     }
     sourceBuckets.total.count += 1
 
+    // Unknown/private IDs still consume the source budget, but never create
+    // competition state. The route retains its normal validation/404 response.
+    if (!isPublicCompetition(competitionId)) {
+      next()
+      return
+    }
+
+    cleanupSourceCompetitions(sourceBuckets, now)
     let sourceCompetition = sourceBuckets.competitions.get(competitionId)
     if (!sourceCompetition) {
       if (sourceBuckets.competitions.size >= 100) {
-        const oldestCompetition =
-          sourceBuckets.competitions.keys().next().value
-        if (oldestCompetition !== undefined) {
-          sourceBuckets.competitions.delete(oldestCompetition)
-        }
+        reject(
+          response,
+          next,
+          earliestBucket(sourceBuckets.competitions.values()),
+          now,
+          'source_competition_capacity',
+        )
+        return
       }
       sourceCompetition = createBucket(now, limits.windowMs)
     }
@@ -177,7 +234,6 @@ export function createRegistrationRateLimit(
       now,
       limits.windowMs,
     )
-    sourceBuckets.competitions.delete(competitionId)
     sourceBuckets.competitions.set(competitionId, sourceCompetition)
     if (sourceCompetition.count >= limits.maxPerSourceCompetition) {
       reject(response, next, sourceCompetition, now, 'source_competition')
@@ -187,11 +243,17 @@ export function createRegistrationRateLimit(
 
     let competitionBucket = competitions.get(competitionId)
     if (!competitionBucket) {
+      if (
+        competitions.size >= limits.maxTrackedCompetitions &&
+        (capacityBuckets.get('competition_capacity')?.resetAt ?? 0) <= now
+      ) {
+        cleanup(now)
+      }
       if (competitions.size >= limits.maxTrackedCompetitions) {
-        const oldestCompetition = competitions.keys().next().value
-        if (oldestCompetition !== undefined) {
-          competitions.delete(oldestCompetition)
-        }
+        rejectCapacity(response, next, now, 'competition_capacity', () =>
+          earliestBucket(competitions.values()).resetAt,
+        )
+        return
       }
       competitionBucket = createBucket(now, limits.windowMs)
     }
@@ -200,7 +262,6 @@ export function createRegistrationRateLimit(
       now,
       limits.windowMs,
     )
-    competitions.delete(competitionId)
     competitions.set(competitionId, competitionBucket)
     if (competitionBucket.count >= limits.maxPerCompetition) {
       reject(response, next, competitionBucket, now, 'competition')
