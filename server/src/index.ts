@@ -22,6 +22,14 @@ const server = createApp(database, {
   sessionSecret: config.sessionSecret,
   cookieSecure: config.cookieSecure,
   allowedOrigins: config.allowedOrigins,
+  trustedProxyAddresses: config.trustedProxyAddresses,
+  registrationLimits: {
+    windowMs: config.registrationRateLimitWindowMs,
+    maxPerSource: config.registrationRateLimitPerSource,
+    maxPerCompetition: config.registrationRateLimitPerCompetition,
+    maxPerSourceCompetition:
+      config.registrationRateLimitPerSourceCompetition,
+  },
 }).listen(config.port, config.host, () => {
   console.log(`API server listening on http://${config.host}:${config.port}`)
   console.log(`SQLite database: ${config.databasePath}`)

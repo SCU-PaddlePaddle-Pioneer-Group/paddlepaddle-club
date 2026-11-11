@@ -3,6 +3,10 @@ import { Router } from 'express'
 import type { Request, Response } from 'express'
 import type { DatabaseSync, SQLOutputValue } from 'node:sqlite'
 import { ApiError } from '../errors.js'
+import {
+  createRegistrationRateLimit,
+  type RegistrationRateLimitOptions,
+} from '../middleware/registrationRateLimit.js'
 
 interface Competition {
   id: string
@@ -88,8 +92,18 @@ function getCompetitionId(value: string | string[] | undefined): string {
   return value
 }
 
-export function createPublicCompetitionsRouter(database: DatabaseSync): Router {
+export function createPublicCompetitionsRouter(
+  database: DatabaseSync,
+  registrationLimits?: Partial<RegistrationRateLimitOptions>,
+): Router {
   const router = Router()
+  const publicCompetition = database.prepare(
+    "SELECT 1 FROM competitions WHERE id = ? AND status = 'published'",
+  )
+  const registrationRateLimit = createRegistrationRateLimit(
+    (competitionId) => Boolean(publicCompetition.get(competitionId)),
+    registrationLimits,
+  )
 
   router.get('/', (_request, response) => {
     const now = Date.now()
@@ -126,70 +140,78 @@ export function createPublicCompetitionsRouter(database: DatabaseSync): Router {
     response.status(200).json({ item })
   })
 
-  router.post('/:id/registrations', (request: Request, response: Response) => {
-    const competitionId = getCompetitionId(request.params.id)
-    const { name, email } = parseRegistrationBody(request.body)
+  router.post(
+    '/:id/registrations',
+    registrationRateLimit,
+    (request: Request, response: Response) => {
+      const competitionId = getCompetitionId(request.params.id)
+      const { name, email } = parseRegistrationBody(request.body)
 
-    let registration: {
-      id: string
-      competitionId: string
-      status: 'pending'
-      createdAt: string
-    }
-
-    database.exec('BEGIN IMMEDIATE;')
-    try {
-      const row = database
-        .prepare(
-          `SELECT id, title, summary, rules, registration_deadline, status, created_at, updated_at
-           FROM competitions
-           WHERE id = ?`,
-        )
-        .get(competitionId)
-
-      if (!row) {
-        throw new ApiError(404, 'COMPETITION_NOT_FOUND', '比赛不存在')
+      let registration: {
+        id: string
+        competitionId: string
+        status: 'pending'
+        createdAt: string
       }
 
-      const competition = mapCompetition(row)
-      if (competition.status !== 'published') {
-        throw new ApiError(404, 'COMPETITION_NOT_FOUND', '比赛不存在')
-      }
-      if (!isRegistrationOpen(competition, Date.now())) {
-        throw new ApiError(409, 'REGISTRATION_CLOSED', '报名已截止')
+      database.exec('BEGIN IMMEDIATE;')
+      try {
+        const row = database
+          .prepare(
+            `SELECT id, title, summary, rules, registration_deadline, status, created_at, updated_at
+             FROM competitions
+             WHERE id = ?`,
+          )
+          .get(competitionId)
+
+        if (!row) {
+          throw new ApiError(404, 'COMPETITION_NOT_FOUND', '比赛不存在')
+        }
+
+        const competition = mapCompetition(row)
+        if (competition.status !== 'published') {
+          throw new ApiError(404, 'COMPETITION_NOT_FOUND', '比赛不存在')
+        }
+        if (!isRegistrationOpen(competition, Date.now())) {
+          throw new ApiError(409, 'REGISTRATION_CLOSED', '报名已截止')
+        }
+
+        const existing = database
+          .prepare(
+            'SELECT 1 FROM registrations WHERE competition_id = ? AND email = ?',
+          )
+          .get(competition.id, email)
+        if (existing) {
+          throw new ApiError(
+            409,
+            'DUPLICATE_REGISTRATION',
+            '该邮箱已报名此比赛',
+          )
+        }
+
+        const id = randomUUID()
+        const createdAt = new Date().toISOString()
+        database
+          .prepare(
+            `INSERT INTO registrations (id, competition_id, name, email, status, created_at)
+             VALUES (?, ?, ?, ?, 'pending', ?)`,
+          )
+          .run(id, competition.id, name, email, createdAt)
+        database.exec('COMMIT;')
+        registration = {
+          id,
+          competitionId: competition.id,
+          status: 'pending',
+          createdAt,
+        }
+      } catch (error) {
+        database.exec('ROLLBACK;')
+        throw error
       }
 
-      const existing = database
-        .prepare(
-          'SELECT 1 FROM registrations WHERE competition_id = ? AND email = ?',
-        )
-        .get(competition.id, email)
-      if (existing) {
-        throw new ApiError(409, 'DUPLICATE_REGISTRATION', '该邮箱已报名此比赛')
-      }
-
-      const id = randomUUID()
-      const createdAt = new Date().toISOString()
-      database
-        .prepare(
-          `INSERT INTO registrations (id, competition_id, name, email, status, created_at)
-           VALUES (?, ?, ?, ?, 'pending', ?)`,
-        )
-        .run(id, competition.id, name, email, createdAt)
-      database.exec('COMMIT;')
-      registration = {
-        id,
-        competitionId: competition.id,
-        status: 'pending',
-        createdAt,
-      }
-    } catch (error) {
-      database.exec('ROLLBACK;')
-      throw error
-    }
-
-    response.status(201).json({ item: registration })
-  })
+      response.status(201).json({ item: registration })
+    },
+  )
 
   return router
 }
