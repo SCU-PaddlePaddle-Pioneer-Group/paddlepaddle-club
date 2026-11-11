@@ -38,7 +38,6 @@ if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 notepad .env                # 将生成的随机值填入 SESSION_SECRET 后保存
 npm.cmd run db:migrate
-npm.cmd run dev             # 监听 http://127.0.0.1:3001
 ```
 
 ```bash
@@ -47,7 +46,6 @@ npm ci
 [ -f .env ] || cp .env.example .env
 openssl rand -hex 32        # 将输出填入 .env 的 SESSION_SECRET
 npm run db:migrate
-npm run dev                 # 监听 http://127.0.0.1:3001
 ```
 
 要点：
@@ -56,7 +54,9 @@ npm run dev                 # 监听 http://127.0.0.1:3001
 - `db:migrate` 可安全重复执行；首次启动也会自动应用未执行的迁移。
 - 后端默认只监听 `127.0.0.1:3001`；可通过 `HOST`、`PORT`、`DATABASE_PATH` 环境变量调整。
 
-### 2.1 管理员初始化（仅测管理功能时需要）
+### 2.1 管理员初始化（完整 Demo 必须执行）
+
+首次安装时，在终端 1 的 `server/` 目录中先创建管理员，再启动后端；仅测试公开查询接口时可跳过本节。已有管理员时无需重跑。
 
 ```powershell
 npm.cmd run db:create-admin     # Linux / macOS: npm run db:create-admin
@@ -66,7 +66,19 @@ npm.cmd run db:create-admin     # Linux / macOS: npm run db:create-admin
 - 该命令只创建**首个**管理员；管理员与会话都存于同一 SQLite 文件，会话有效期 8 小时。
 - 密码由使用者本机输入，不经过聊天工具或 AI，也不写入任何文档。
 
-### 2.2 健康检查
+### 2.2 启动与健康检查
+
+完成迁移与管理员初始化后，在终端 1 启动后端：
+
+```powershell
+npm.cmd run dev             # 监听 http://127.0.0.1:3001
+```
+
+```bash
+npm run dev                 # 监听 http://127.0.0.1:3001
+```
+
+保持终端 1 运行。在终端 2 执行下面的健康检查，确认成功后再按 §3 启动前端。
 
 ```powershell
 Invoke-RestMethod http://127.0.0.1:3001/api/health    # 预期 {"status":"ok"}
@@ -105,18 +117,18 @@ npm run dev                 # http://localhost:3000
 ## 4. 联调验证（最小闭环）
 
 1. 代理链路：`http://localhost:3000/api/health` → `{"status":"ok"}`。
-2. 前台报名：打开 `http://localhost:3000/#/competitions` → 进入已发布比赛详情 → 填写**虚构**姓名与邮箱提交 → 保存回执中的报名编号。
-3. 管理端：`http://localhost:3000/#/admin/login` 登录 → 比赛管理 → 新建/编辑比赛并发布。
-4. 列表点「报名 →」→ 核对同一报名编号、姓名、邮箱 → 修改处理状态（待处理 / 已确认 / 已拒绝）。
+2. 创建赛事：新数据库没有样本赛事。先在 `http://localhost:3000/#/admin/login` 登录 → 比赛管理 → 新建比赛，设置未来的报名截止时间 → 发布 → 核对前台列表可见。
+3. 前台报名：打开 `http://localhost:3000/#/competitions` → 进入刚发布的比赛详情 → 填写**虚构**姓名与邮箱提交 → 保存回执中的报名编号。
+4. 返回管理赛事列表，点该比赛的「报名 →」→ 核对同一报名编号、姓名、邮箱 → 将待处理状态改为已确认或已拒绝（需包含 #25 / PR #29 的真实页面接入）。
 5. 刷新页面与重启后端 → 报名记录与处理状态均应保留。
 6. 完整验收逐条对照 `docs/acceptance.md`（16 项），演示证据截图归档。
 
 ## 5. 数据持久化、备份与恢复
 
 - 数据库默认文件：`server/data/club.sqlite`（相对路径以 `server/` 为基准，不依赖启动时所在目录）；`server/data/` 已加入忽略规则，不进 Git。
-- **备份**：先停止后端进程，再复制 `club.sqlite`（若存在 `-wal` / `-shm` 文件一并复制）到目标位置。后端运行中直接复制可能得到不一致的快照。
-- **恢复**：停止后端 → 用备份文件覆盖 `server/data/club.sqlite` → 清理残留的 `-wal` / `-shm` → 启动后端 → 用 `/api/health` 和页面数据核对。
-- **演示数据重置**（全部为虚构数据）：停止后端 → 删除 `server/data/club.sqlite` → 重新 `db:migrate` → 重新 `db:create-admin`。或仅删除/修改后台中的演示记录。
+- **备份**：先停止后端及所有访问该数据库的脚本，再将 `club.sqlite` 和此时存在的 `club.sqlite-wal` 一并复制到同一备份目录。WAL 可能包含已提交但尚未写入主文件的数据，不可遗漏；`club.sqlite-shm` 是可重建的共享内存索引，无需备份。后端运行中直接复制可能得到不一致的快照。
+- **恢复**：停止后端及所有访问该数据库的脚本 → 保留当前数据库文件集用于回滚 → 清理目标目录中**旧的** `club.sqlite-wal` / `club.sqlite-shm` → 用备份的 `club.sqlite` 覆盖主文件，并将备份配套的 `club.sqlite-wal`（若存在）还原到同一目录、保持原文件名 → 启动后端 → 用 `/api/health` 和页面数据核对。**不能删除刚恢复的 WAL**；`-shm` 由 SQLite 重建，不从备份恢复，也不混用不同备份的主文件与 WAL。
+- **演示数据重置**（全部为虚构数据）：停止后端及访问该数据库的脚本 → 删除 `server/data/club.sqlite` 及配套的 `-wal` / `-shm` → 重新 `db:migrate` → 重新 `db:create-admin`。或仅修改后台中的演示记录。
 - 任何情况下不把数据库文件、`.env`、真实凭据或真实报名人信息提交到 Git 或写入共享文档。
 
 ## 6. 生产 HTTPS 与部署说明（概要）
