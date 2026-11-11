@@ -1,9 +1,24 @@
 # C 工作阶段总结与交接
 
-更新日期：2026 年 11 月 10 日  
+更新日期：2026 年 11 月 11 日  
 代码仓库：`TimeOscar/paddlepaddle-club` fork  
 当前开发分支：`copilot/c-backend-health`  
 代码目录：`D:\AAAcode storage total\paddle\paddlepaddle-club`
+
+## 同步核对记录（2026 年 11 月 11 日）
+
+- 已成功从 `upstream`（`SCU-PaddlePaddle-Pioneer-Group/paddlepaddle-club`）抓取远端分支引用；此操作未执行合并或推送。
+- 本地 `HEAD`、`upstream/develop` 和 `origin/develop` 均为 `a585a6abd6d3d1ea65036adb4b0c7e972c2f4eae`，相对 `upstream/develop` 无领先或落后提交（`0 / 0`）。
+- 团队 `develop` 已包含本次抓取到的 A、B、C、D 协作者分支提交；没有发现尚未合入 `develop` 的协作者分支提交。因此，其他人的已合入工作已在当前代码中，无需再拉取或合并。
+- 检查时工作树干净。`origin/copilot/c-backend-health`（TimeOscar fork）比本地分支少 25 个提交；这不代表团队 `develop` 未同步，也未对 fork 执行推送。
+- 上述结论只反映 2026 年 11 月 11 日本次抓取时 GitHub 上可见的远端状态；用户确认前暂停后续开发。
+
+## PR 与本机复核（2026 年 11 月 11 日）
+
+- 只读检查官方仓库近期关闭 PR：#15（C 后端）、#17（B 前台）、#19（A 首页/赛事接入）和 #20（A 管理接口接入）均已合入 `develop`。官方 `develop` 与本地 `HEAD` 同为 `a585a6abd6d3d1ea65036adb4b0c7e972c2f4eae`，相关改动已在当前工作区。
+- PR #17/#19/#20 记录了 Vite 代理、公开赛事/报名，以及登录和比赛管理的部分真实联调；这是协作者提供的验证记录，不代表 C 已在目标环境亲自验收。
+- PR #20 明确指出 D 的报名管理页面尚未交付，仍为受保护占位页；完整演示闭环还需 D 页面及后续联调。
+- 本次在 `server/` 执行 `npm.cmd test`：15 项通过、0 失败；`npm.cmd run build`：通过。未执行推送、合并或其他 GitHub 写操作。
 
 ## 1. 阶段目标
 
@@ -37,21 +52,20 @@ SQLite 是服务运行目录下的普通数据库文件，不需要注册外部�
 
 ### 自动化验证
 
-- `npm test`：14 项通过，覆盖迁移、数据和会话持久性、认证/来源限制、管理流程、公开可见性、列表排序、报名返回 ID 与数据库主键一致、去重及截止/输入校验。
-- `npm run build`：TypeScript 编译通过。
-- `npm test`、`npm run build` 已在本机通过；完整 Linux/浏览器端联调尚未进行。验收时需用公开报名成功响应中的 `item.id` 对照管理员报名列表/SQLite 记录，并重启服务确认数据保留。
+- 本次 `npm.cmd test`：15 项通过，覆盖迁移、数据和会话持久性、认证/来源限制、管理流程、公开可见性、列表排序、报名返回 ID 与数据库主键一致、去重及截止/输入校验。
+- 本次 `npm.cmd run build`：TypeScript 编译通过。
+- PR #17/#19/#20 描述了协作者完成的部分浏览器/API 联调；C 本人在目标演示环境的配置、完整浏览器验收和重启持久性验收仍未完成。验收时需核对报名返回编号与管理员报名列表/SQLite 记录，并确认重启后数据保留。
 
 ## 3. 当前未完成
 
-- 与 B 的 Vite 代理、与 B/D 的页面联调及完整浏览器流程。
-- B 配置 Vite 代理并与 A/C 完成真实查询、报名和浏览器联调。
-- C 在目标环境配置 `SESSION_SECRET`、创建虚构测试管理员并完成 Linux/演示机验收。
+- C 本人在目标演示环境重新验证 Vite 代理和赛事查询/报名联调；PR #17/#19 已有协作者验证记录。
+- D 的报名管理页面仍为受保护占位页，页面交付后还需验证真实报名查询和状态更新。
+- C 在目标环境配置 `SESSION_SECRET`、创建虚构测试管理员并完成完整演示机验收。
 - 用户指定 SCU 仓库/分支的交付确认；当前 `origin` 是 TimeOscar fork，不应误认为已合入 SCU 官方仓库。
 
 ## 4. 当前交接状态
 
-- 分支：`copilot/c-backend-health`，跟踪 `origin/copilot/c-backend-health`；`origin` 指向 `TimeOscar/paddlepaddle-club`。
-- 本轮提交：`7fde9539d164c9e21f848a4f0d2315b1af661d95`（列表排序实现与测试）；`ecb22f402899b90253a61851e85922b6c43152ff`（Windows 启动说明）；`3de4e26db57eed24f55c15eebecc57f3aa3e6894`（验证报名响应 ID 与 SQLite 主键一致）。均在本地 `copilot/c-backend-health`，尚未推送（分支领先远程 3 个提交）。
+- 分支：`copilot/c-backend-health`，跟踪 `origin/copilot/c-backend-health`；`origin` 指向 `TimeOscar/paddlepaddle-club`。本地 `HEAD` 为 `a585a6abd6d3d1ea65036adb4b0c7e972c2f4eae`，与 `upstream/develop`、`origin/develop` 一致；TimeOscar fork 的跟踪分支比本地少 25 个提交。
 - 未确认目标仓库/分支前不推送到 SCU 官方仓库，也不更改远程地址。
 - SQLite 数据库文件是运行数据，不提交、不复制到代码 PR。
 
