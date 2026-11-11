@@ -184,9 +184,10 @@ export default function Registrations() {
             该比赛暂无报名。
           </p>
         ) : (
-          <table className="w-full min-w-[720px] border-collapse text-left">
+          <table className="w-full min-w-[960px] border-collapse text-left">
             <thead>
               <tr className="border-b border-border">
+                <th className={thClass}>报名编号</th>
                 <th className={thClass}>姓名</th>
                 <th className={thClass}>邮箱</th>
                 <th className={thClass}>状态</th>
@@ -197,6 +198,7 @@ export default function Registrations() {
             <tbody>
               {registrations.map((registration) => (
                 <tr key={registration.id} className="border-b border-border">
+                  <td className={`${tdClass} whitespace-nowrap font-mono text-[12px]`}>{registration.id}</td>
                   <td className={`${tdClass} font-medium`}>{registration.name}</td>
                   <td className={`${tdClass} font-mono text-[13px]`}>{registration.email}</td>
                   <td className={tdClass}>
