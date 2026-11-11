@@ -1,5 +1,12 @@
 import { useEffect } from 'react'
-import { Routes, Route, useLocation } from 'react-router'
+import { Routes, Route, Navigate, useLocation } from 'react-router'
+import ModulePending from '@/pages/ModulePending'
+import CompetitionList from '@/pages/competitions/CompetitionList'
+import CompetitionDetail from '@/pages/competitions/CompetitionDetail'
+import AdminAccess from '@/components/layout/AdminAccess'
+import AdminLogin from '@/pages/admin/Login'
+import AdminCompetitionList from '@/pages/admin/CompetitionList'
+import AdminCompetitionEdit from '@/pages/admin/CompetitionEdit'
 import Header from './components/layout/Header'
 import Footer from './components/layout/Footer'
 import Home from './pages/Home'
@@ -43,6 +50,17 @@ export default function App() {
           <Route path="/posts" element={<Posts />} />
           <Route path="/posts/:slug" element={<PostDetail />} />
           <Route path="/about" element={<About />} />
+          <Route path="/competitions" element={<CompetitionList />} />
+          <Route path="/competitions/:id" element={<CompetitionDetail />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={<AdminAccess />}>
+            <Route index element={<Navigate to="/admin/competitions" replace />} />
+            <Route path="competitions" element={<AdminCompetitionList />} />
+            <Route path="competitions/new" element={<AdminCompetitionEdit />} />
+            <Route path="competitions/:id/edit" element={<AdminCompetitionEdit />} />
+            {/* D5 尚未交付真实接口绑定，保留占位且同样要求登录。 */}
+            <Route path="competitions/:id/registrations" element={<ModulePending title="报名管理暂未开放" description="报名管理页面准备中，请稍后访问。" />} />
+          </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

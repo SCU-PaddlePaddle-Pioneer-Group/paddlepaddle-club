@@ -1,9 +1,23 @@
 # C 工作阶段总结与交接
 
-更新日期：2026 年 11 月 10 日  
+更新日期：2026 年 11 月 11 日  
 代码仓库：`TimeOscar/paddlepaddle-club` fork  
 当前开发分支：`copilot/c-backend-health`  
-代码目录：`D:\AAAcode storage total\paddle\paddlepaddle-club`
+代码目录：本机克隆目录下的 `paddlepaddle-club`
+
+## 同步与工作区状态
+
+- 上次远端核对时（2026 年 11 月 11 日上午），本地 `HEAD`、`upstream/develop` 和 `origin/develop` 均为 `a585a6abd6d3d1ea65036adb4b0c7e972c2f4eae`；该记录仅代表当时状态。
+- 本次本地核对时，当前分支为 `copilot/c-backend-health`，`HEAD` 为 `d9146fa981fc5200bfc9294b922946ea97d40db9`。工作树有未提交修改；本次未重新抓取或核对远端分支，不能据此判断当前远端同步状态。
+- 未推送、合并或执行 GitHub 写操作。最新工作区修改涉及下述 issue 修复及 README 启动路径说明。
+
+## 最新 issue 修复与验证（2026 年 11 月 11 日）
+
+- Issue #21：当前本地实现支持通过 `TRUSTED_PROXY_ADDRESSES` 显式配置可信代理；可信 HTTPS 代理可正确设置 Secure/HttpOnly 会话 Cookie，并按客户端来源隔离登录失败限额；未信任代理时忽略伪造的转发头。相关自动化测试和部署说明已补充。
+- Issue #22：管理接口鉴权现在查询管理员记录；管理员被撤销后销毁旧会话、清除 Cookie，并拒绝管理读写请求。
+- Issue #28：公开报名新增可配置、按来源/赛事/来源与赛事组合计数的限流；返回 `429 RATE_LIMITED` 和 `Retry-After`，限流状态有过期清理及容量上限。当前限流状态仅保存在单个 Node 进程内存，不适用于跨进程共享额度。
+- 三项实现均在本地工作树，尚未提交或合并。最新 `npm.cmd test`：21 项通过；`npm.cmd run build`：通过。测试包含可信 HTTPS 代理、Cookie、登录来源隔离、未信任转发头、管理员撤销和报名限流场景。
+- GitHub 上 Issue #21、#22、#28 当前均为 Open，未配置关联的关闭 PR。故本地实现及自动化测试通过不代表 issue 已交付关闭；仍需提交审查，并按目标部署环境验证。
 
 ## 1. 阶段目标
 
@@ -29,7 +43,7 @@ SQLite 是服务运行目录下的普通数据库文件，不需要注册外部�
   - 同一比赛下规范化邮箱重复报名返回 409。
   - 成功报名写入 SQLite 并返回真实报名 ID，不向公开响应返回个人信息。
 - 管理员密码使用 scrypt 哈希，提供交互式初始化命令；实际管理员账号尚未创建。
-- 管理员登录、当前用户和退出 API；SQLite 持久会话、HttpOnly Cookie、登录限速和管理写操作来源校验。
+- 管理员登录、当前用户和退出 API；SQLite 持久会话、HttpOnly Cookie、登录限速和管理写操作来源校验。管理员记录被撤销后，管理接口会终止旧会话。
 - 管理员比赛查询/新建/编辑/发布/下架，以及报名查询和处理状态更新 API。
 - 管理赛事 `items` 字段：`id,title,summary,rules,registrationDeadline,status,createdAt,updatedAt`；管理报名 `items` 字段：`id,competitionId,name,email,status,createdAt`。报名处理状态为 `pending|confirmed|rejected`。
 - 失效/过期会话的退出请求返回 `401 UNAUTHENTICATED` 并清 Cookie；D 端需据此清理前端登录态。
@@ -37,30 +51,29 @@ SQLite 是服务运行目录下的普通数据库文件，不需要注册外部�
 
 ### 自动化验证
 
-- `npm test`：14 项通过，覆盖迁移、数据和会话持久性、认证/来源限制、管理流程、公开可见性、列表排序、报名返回 ID 与数据库主键一致、去重及截止/输入校验。
+- `npm.cmd test`：21 项通过，覆盖可信代理与转发头校验、HTTPS Cookie/登录限流隔离、管理员撤销后旧会话失效、公开报名限流隔离及过期恢复。
 - `npm run build`：TypeScript 编译通过。
-- `npm test`、`npm run build` 已在本机通过；完整 Linux/浏览器端联调尚未进行。验收时需用公开报名成功响应中的 `item.id` 对照管理员报名列表/SQLite 记录，并重启服务确认数据保留。
+- 本次测试和构建针对当前本机工作区；完整目标环境验收仍由用户最后执行。验收时需核对报名返回的 `item.id` 与管理列表/SQLite 记录，并重启服务确认数据保留。
 
 ## 3. 当前未完成
 
-- 与 B 的 Vite 代理、与 B/D 的页面联调及完整浏览器流程。
-- B 配置 Vite 代理并与 A/C 完成真实查询、报名和浏览器联调。
-- C 在目标环境配置 `SESSION_SECRET`、创建虚构测试管理员并完成 Linux/演示机验收。
+- PR #17 记录了 B 配置 Vite 代理及部分真实接口联调；C 本人和用户的目标环境验收仍未完成，管理页面完整流程也待回归。
+- Issue #21 的本地可信反向代理配置与回归测试已实现；目标环境/真实入口代理验证及提交交付仍待完成。
+- Issue #21、#22、#28 的修改均尚未提交；目标环境最终验收由用户执行。
 - 用户指定 SCU 仓库/分支的交付确认；当前 `origin` 是 TimeOscar fork，不应误认为已合入 SCU 官方仓库。
 
 ## 4. 当前交接状态
 
-- 分支：`copilot/c-backend-health`，跟踪 `origin/copilot/c-backend-health`；`origin` 指向 `TimeOscar/paddlepaddle-club`。
-- 本轮提交：`7fde9539d164c9e21f848a4f0d2315b1af661d95`（列表排序实现与测试）；`ecb22f402899b90253a61851e85922b6c43152ff`（Windows 启动说明）；`3de4e26db57eed24f55c15eebecc57f3aa3e6894`（验证报名响应 ID 与 SQLite 主键一致）。均在本地 `copilot/c-backend-health`，尚未推送（分支领先远程 3 个提交）。
+- 分支：`copilot/c-backend-health`，跟踪 `origin/copilot/c-backend-health`；`origin` 指向 `TimeOscar/paddlepaddle-club`。本次本地 `HEAD` 为 `d9146fa981fc5200bfc9294b922946ea97d40db9`；远端本次未重新核对。
 - 未确认目标仓库/分支前不推送到 SCU 官方仓库，也不更改远程地址。
 - SQLite 数据库文件是运行数据，不提交、不复制到代码 PR。
 
 ## 5. Linux 本地测试与启动
 
+以下命令须在包含待验证代码的工作区运行。当前 #21/#22/#28 改动尚未提交；从远端重新克隆的代码不会包含这些本地改动。
+
 ```bash
-git clone --branch copilot/c-backend-health --single-branch \
-  https://github.com/TimeOscar/paddlepaddle-club.git
-cd paddlepaddle-club/server
+cd path/to/paddlepaddle-club/server
 node --version                 # 需要 v22.13 或更新
 npm ci
 if [ ! -f .env ]; then cp .env.example .env; fi
@@ -84,10 +97,10 @@ curl -i http://127.0.0.1:3001/api/competitions
 
 ## 6. Windows 本地安装、初始化与启动
 
-在 PowerShell 中执行以下命令；需安装 Node.js `>=22.13`。`npm.cmd` 用于避免 PowerShell 执行策略拦截 `npm.ps1`：
+先在包含待验证代码的仓库根目录打开 PowerShell；需安装 Node.js `>=22.13`。`npm.cmd` 用于避免 PowerShell 执行策略拦截 `npm.ps1`：
 
 ```powershell
-Set-Location 'D:\AAAcode storage total\paddle\paddlepaddle-club\server'
+Set-Location .\server
 node --version
 npm.cmd ci
 if (-not (Test-Path .env)) { Copy-Item .env.example .env }
@@ -116,10 +129,10 @@ Invoke-RestMethod http://127.0.0.1:3001/api/competitions
 
 ## 7. 下一阶段
 
-1. 由 B 配置 `/api` 代理并验证 `http://localhost:3000/api/health` 可到达 `http://127.0.0.1:3001/api/health`；当前尚未真实联调。
-2. C 与 A/B 按已统一的公开列表合同联调赛事查询与报名；验收核对响应 `item.id` 与数据库/管理列表记录，并重启服务验证持久化。
-3. D 确认管理端字段、状态文案及失效登录处理；当前实现细节见本交接文档第 2 节和 API 开发文档第 6.6-6.8 节。
-4. 由 C 在目标 Linux/演示机按上方步骤验证当前代码；由维护者确认 PR 目标分支及远程仓库。
+1. 为目标部署环境配置准确的可信代理地址，并验证真实 HTTPS 入口下 Cookie、客户端识别与登录限流行为；不得使用通配信任范围。
+2. 由 C 提交/交接 Issue #21、#22、#28 的本地修改；跨进程或多副本部署前，补充共享限流方案或在入口层限流。
+3. 目标环境与最终演示验收由用户执行；核对真实报名编号、后台记录及重启后数据持久性。
+4. 由维护者确认目标仓库、分支及 PR 安排。
 
 新增依赖安装如果遇到系统权限、网络、操作系统组件或需要用户确认的提示，应停下并把命令和提示交给 C；不要绕过机器策略。管理员初始化只创建虚构/本地测试账号，真实密码由 C 本地输入，不写进文档。
 

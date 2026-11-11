@@ -10,6 +10,19 @@ export interface ServerConfig {
   sessionSecret: string | undefined
   cookieSecure: boolean
   allowedOrigins: string[]
+  trustedProxyAddresses: string[]
+  registrationRateLimitWindowMs: number
+  registrationRateLimitPerSource: number
+  registrationRateLimitPerCompetition: number
+  registrationRateLimitPerSourceCompetition: number
+}
+
+function positiveIntegerEnv(name: string, defaultValue: number): number {
+  const value = Number(process.env[name] ?? defaultValue)
+  if (!Number.isSafeInteger(value) || value < 1) {
+    throw new Error(`${name} 必须是大于 0 的整数`)
+  }
+  return value
 }
 
 export function loadConfig(): ServerConfig {
@@ -30,6 +43,37 @@ export function loadConfig(): ServerConfig {
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean)
+  const trustedProxyAddresses = (process.env.TRUSTED_PROXY_ADDRESSES ?? '')
+    .split(',')
+    .map((address) => address.trim())
+    .filter(Boolean)
+  if (trustedProxyAddresses.some((address) => address === '*')) {
+    throw new Error('TRUSTED_PROXY_ADDRESSES 不能使用通配符 *')
+  }
+  const registrationRateLimitWindowMs = positiveIntegerEnv(
+    'REGISTRATION_RATE_LIMIT_WINDOW_MS',
+    15 * 60 * 1000,
+  )
+  const registrationRateLimitPerSource = positiveIntegerEnv(
+    'REGISTRATION_RATE_LIMIT_PER_SOURCE',
+    60,
+  )
+  const registrationRateLimitPerCompetition = positiveIntegerEnv(
+    'REGISTRATION_RATE_LIMIT_PER_COMPETITION',
+    300,
+  )
+  const registrationRateLimitPerSourceCompetition = positiveIntegerEnv(
+    'REGISTRATION_RATE_LIMIT_PER_SOURCE_COMPETITION',
+    5,
+  )
+  if (
+    registrationRateLimitPerCompetition <=
+    registrationRateLimitPerSourceCompetition
+  ) {
+    throw new Error(
+      '赛事报名限流必须高于单一来源的单赛事限流',
+    )
+  }
 
   return {
     host: process.env.HOST ?? '127.0.0.1',
@@ -40,5 +84,10 @@ export function loadConfig(): ServerConfig {
     sessionSecret: process.env.SESSION_SECRET,
     cookieSecure: cookieSecureValue === 'true',
     allowedOrigins,
+    trustedProxyAddresses,
+    registrationRateLimitWindowMs,
+    registrationRateLimitPerSource,
+    registrationRateLimitPerCompetition,
+    registrationRateLimitPerSourceCompetition,
   }
 }

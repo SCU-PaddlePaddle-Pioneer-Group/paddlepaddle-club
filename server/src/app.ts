@@ -4,6 +4,7 @@ import session from 'express-session'
 import { SQLiteSessionStore } from './auth/sqliteSessionStore.js'
 import { ApiError } from './errors.js'
 import { createAdminOriginMiddleware } from './middleware/verifyAdminOrigin.js'
+import type { RegistrationRateLimitOptions } from './middleware/registrationRateLimit.js'
 import { createAdminAuthRouter } from './routes/adminAuth.js'
 import { createPublicCompetitionsRouter } from './routes/publicCompetitions.js'
 
@@ -11,12 +12,17 @@ export interface AppOptions {
   sessionSecret: string
   cookieSecure?: boolean
   allowedOrigins?: string[]
+  trustedProxyAddresses?: string[]
+  registrationLimits?: Partial<RegistrationRateLimitOptions>
 }
 
 export function createApp(database: DatabaseSync, options: AppOptions) {
   const app = express()
 
   app.disable('x-powered-by')
+  if (options.trustedProxyAddresses?.length) {
+    app.set('trust proxy', options.trustedProxyAddresses)
+  }
   app.use(express.json({ limit: '64kb' }))
   app.use(
     session({
@@ -61,7 +67,10 @@ export function createApp(database: DatabaseSync, options: AppOptions) {
     createAdminAuthRouter(database, options.cookieSecure ?? false),
   )
 
-  app.use('/api/competitions', createPublicCompetitionsRouter(database))
+  app.use(
+    '/api/competitions',
+    createPublicCompetitionsRouter(database, options.registrationLimits),
+  )
 
   app.use((_request, response) => {
     response.status(404).json({

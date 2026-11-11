@@ -4,6 +4,7 @@ import type { Request, Response } from 'express'
 import type { DatabaseSync } from 'node:sqlite'
 import { hashPassword, verifyPassword } from '../auth/password.js'
 import { ApiError } from '../errors.js'
+import { createRequireAdmin } from '../middleware/requireAdmin.js'
 import { createAdminManagementRouter } from './adminManagement.js'
 
 const maxFailedAttempts = 5
@@ -86,10 +87,11 @@ export function createAdminAuthRouter(
   cookieSecure: boolean,
 ): Router {
   const router = Router()
+  const requireAdmin = createRequireAdmin(database, cookieSecure)
   const failedAttempts = new Map<string, { count: number; resetAt: number }>()
   const dummyPasswordHash = hashPassword(randomBytes(32).toString('hex'))
 
-  router.use(createAdminManagementRouter(database))
+  router.use(createAdminManagementRouter(database, requireAdmin))
 
   router.post('/login', async (request, response) => {
     const now = Date.now()
@@ -144,12 +146,11 @@ export function createAdminAuthRouter(
     })
   })
 
-  router.get('/me', (request, response) => {
+  router.get('/me', requireAdmin, (request, response) => {
     const adminId = request.session.adminId
     if (!adminId) {
       throw new ApiError(401, 'UNAUTHENTICATED', '请先登录')
     }
-
     const admin = database
       .prepare('SELECT id, username FROM admins WHERE id = ?')
       .get(adminId) as { id: string; username: string } | undefined

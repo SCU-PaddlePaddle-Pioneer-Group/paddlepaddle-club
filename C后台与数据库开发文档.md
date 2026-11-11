@@ -106,17 +106,21 @@ npm test               # 运行服务端测试
 NODE_ENV=development
 HOST=127.0.0.1
 PORT=3001
-DATABASE_PATH=./data/club.sqlite
+DATABASE_PATH=data/club.sqlite
 SESSION_SECRET=replace-with-a-random-secret-of-at-least-32-bytes
-SESSION_TTL_HOURS=8
 COOKIE_SECURE=false
+ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+REGISTRATION_RATE_LIMIT_WINDOW_MS=900000
+REGISTRATION_RATE_LIMIT_PER_SOURCE=60
+REGISTRATION_RATE_LIMIT_PER_COMPETITION=300
+REGISTRATION_RATE_LIMIT_PER_SOURCE_COMPETITION=5
 ```
 
 要求：
 
 1. 启动时校验必要配置；缺失或格式错误时打印明确错误并以非零状态退出，不要回退为固定秘密或内存数据库。
 2. `SESSION_SECRET` 必须随机生成且不提交。`COOKIE_SECURE=false` 仅用于本机 HTTP 开发；对外 HTTPS 部署必须设为 `true`。
-3. 使用稳定的绝对数据库路径，避免因执行命令时当前工作目录不同而创建多份数据库。启动日志只打印数据库路径和监听地址，不输出 Cookie、密钥、密码、报名邮箱或请求体。
+3. 相对 `DATABASE_PATH` 由服务解析为相对于 `server/` 的绝对路径，避免因执行命令时当前工作目录不同而创建多份数据库；不要在文档中写入某台电脑的绝对路径。启动日志只打印数据库路径和监听地址，不输出 Cookie、密钥、密码、报名邮箱或请求体。
 4. SQLite 数据库和备份文件位于 `server/data/`（或部署者显式配置的持久化目录），纳入 `.gitignore`。迁移只增不毁；备份通过停止服务后复制数据库，或使用 SQLite 在线备份机制。
 5. `/api/health` 只报告服务和数据库是否可用，不返回环境变量、路径、版本密钥或管理员信息。
 6. 正常关闭时关闭数据库连接；运行错误需写入标准错误/结构化日志，并以非成功响应返回。
@@ -188,6 +192,7 @@ COOKIE_SECURE=false
 ### 6.1 通用约定
 
 - API 前缀：`/api`；成功响应为 JSON，UTF-8。
+- 列表成功响应统一使用 `{ "items": [...] }`；单条资源以及报名成功结果统一使用 `{ "item": {...} }`。登录/当前管理员等认证响应按各自契约使用 `{ "admin": {...} }`，健康检查和登出也按各自契约返回，不强行套用资源包装。
 - 日期时间必须为含时区的 ISO 8601 字符串。比较截止时间时统一转成 UTC 时间点。
 - 错误响应统一为：
 
@@ -249,6 +254,7 @@ COOKIE_SECURE=false
 
 - 只查得到 `published` 比赛；草稿、下架及不存在的 ID 一律 `404 COMPETITION_NOT_FOUND`，避免公开接口泄漏内部状态。
 - 返回同一比赛字段及 `registrationOpen`；不返回报名数量、邮箱、管理员 ID 或内部备注。
+- 单条资源外层为 `{ "item": {...} }`，与公开列表 `items` 和报名成功 `item` 命名统一。
 
 ### 6.5 提交报名
 
@@ -306,6 +312,7 @@ COOKIE_SECURE=false
 #### `GET /api/admin/me`
 
 有效会话返回 `{ "admin": { "id": "...", "username": "..." } }`；否则返回 `401 UNAUTHENTICATED`。
+所有管理接口每次请求都会确认管理员记录仍存在；若管理员被撤销，服务端销毁该会话、清除 Cookie，并返回 `401 UNAUTHENTICATED`，后续使用同一 Cookie 也不能继续访问。
 
 #### `POST /api/admin/logout`
 
@@ -336,6 +343,8 @@ COOKIE_SECURE=false
 
 管理列表需要返回状态和时间字段，不包含密码/session 字段。不存在的比赛返回 `404 COMPETITION_NOT_FOUND`。任何下架操作应即时影响公开查询和报名接口，无需重启服务。
 
+管理比赛列表返回 `{ "items": [...] }`；创建和更新比赛返回 `{ "item": {...} }`。当前列表按 `createdAt DESC`、同时间 `id ASC` 排序。
+
 ### 6.8 管理报名
 
 | 方法 | 路径 | 用途 | 成功状态 |
@@ -352,6 +361,7 @@ COOKIE_SECURE=false
 ```
 
 允许目标值只有 `pending`、`confirmed`、`rejected`。成功后返回更新后的记录；未知状态 `400 VALIDATION_ERROR`，ID 不存在 `404 REGISTRATION_NOT_FOUND`。
+更新成功的外层为 `{ "item": {...} }`。D 负责确认管理页面所需字段、状态文案及会话失效后的页面行为；后端当前 logout 在会话失效时返回 `401 UNAUTHENTICATED` 并清 Cookie。
 
 ## 7. 服务端校验与安全要求
 
@@ -371,9 +381,10 @@ COOKIE_SECURE=false
 - 密码使用成熟的自适应单向哈希算法及安全参数；禁止明文、固定盐或自制算法。
 - Cookie 至少设置 `HttpOnly`、`SameSite=Lax`、明确过期时间和 `Path=/`；HTTPS 环境加 `Secure`。
 - 登录成功后轮换 session ID，避免会话固定；退出时服务端销毁 session。
-- 所有 `/api/admin/*` 管理读写接口（登录接口除外）逐个经过后端鉴权，不能依赖 React 隐藏按钮。
+- 所有 `/api/admin/*` 管理读写接口（登录接口除外）逐个经过后端鉴权，不能依赖 React 隐藏按钮；每次鉴权均确认管理员记录仍存在。管理员被撤销后销毁旧会话、清除 Cookie，并以 `401 UNAUTHENTICATED` 拒绝后续请求。
 - 不使用只存在进程内存的开发 MemoryStore 作为正式会话存储。SQLite session store 与业务库可同目录，但需清楚区分会话数据表和业务表。
 - 写接口校验 `Origin`/请求来源，仅允许约定的前端开发源和部署源；禁止通配 CORS 与反射任意来源。使用 Vite 同源 `/api` 代理可避免本地跨域。
+- 反向代理部署必须仅信任受控代理，并由代理覆盖转发来源头。当前代码通过 `TRUSTED_PROXY_ADDRESSES` 显式配置可信地址/CIDR，默认不信任代理并拒绝通配符；只有来自可信范围的转发头用于 `request.ip` 和 HTTPS Cookie 判定。HTTPS 入口需设 `COOKIE_SECURE=true`。自动化测试覆盖可信代理下 Secure/HttpOnly Cookie 与登录限流隔离，以及未信任来源伪造转发头被忽略；目标部署环境仍须按实际代理拓扑验证，不可直接把开发配置当作公网部署方案。
 - 如果前端与 API 被部署到不同站点，Cookie 的 SameSite、Secure、CORS 和 CSRF 需要重新评估；优先通过同站点反向代理部署，不要默认假设 GitHub Pages 与任意 API 域名的 Cookie 可以工作。
 
 ### 7.3 个人信息、输入及错误
@@ -381,6 +392,7 @@ COOKIE_SECURE=false
 - 报名信息只在管理 API 中返回；日志不记录报名请求体、邮箱、密码、session ID。
 - SQL 一律参数化；数据库唯一约束、外键和状态 CHECK 约束必须启用。
 - 设置请求体大小限制、登录限速和合理的安全响应头；生产环境 HTTPS。
+- 公开报名限流使用 `REGISTRATION_RATE_LIMIT_WINDOW_MS`、`REGISTRATION_RATE_LIMIT_PER_SOURCE`、`REGISTRATION_RATE_LIMIT_PER_COMPETITION` 和 `REGISTRATION_RATE_LIMIT_PER_SOURCE_COMPETITION` 配置。当前默认窗口为 15 分钟，分别限制每来源 60 次、每赛事 300 次、同一来源报名同一赛事 5 次；赛事总限额必须高于来源+赛事限额。超限在报名校验/入库前返回 `429 RATE_LIMITED` 和 `Retry-After`。限流状态仅存单进程内存，过期后清理并设有容量上限；首次超限日志不记录来源 IP 或报名资料。多进程/多副本不会共享额度，扩容前须使用共享存储或入口层限流。
 - 统一错误处理中间件；预期业务错误映射成已约定的状态码和 `error.code`。未预期异常记服务端日志并返回通用 `500 INTERNAL_ERROR`，不能静默吞错或返回伪成功。
 - ID 格式、请求字段和状态要在入口校验；不能用 `as any`/未经校验的对象强转来绕过 TypeScript。
 
@@ -441,7 +453,10 @@ COOKIE_SECURE=false
 - [ ] 草稿、下架及不存在的比赛对公开接口都不泄漏详情或报名数据。
 - [ ] 公开列表、详情和错误响应都没有报名人姓名/邮箱。
 - [ ] 篡改 Cookie、退出后复用旧 Cookie、伪造/缺失请求来源不能执行管理写操作。
+- [ ] 撤销管理员后，旧 Cookie 访问身份、比赛和报名管理接口均返回 401，且不改变业务数据。
 - [ ] 登录失败不区分账号不存在与密码错误；尝试频率受限。
+- [ ] 临时数据库测试证明公开报名超限返回 429、带 `Retry-After` 且不新增记录；来源/赛事隔离及过期恢复有效。
+- [ ] 在目标反向代理环境验证可信来源、HTTPS Secure/HttpOnly Cookie、登录限流隔离及本地 HTTP 开发行为；自动化覆盖已通过，但 Issue #21 仍需提交审查和目标环境验收。
 - [ ] 数据库异常或未知异常不会返回成功，也不会将堆栈/SQL 返回浏览器。
 - [ ] 初始化和迁移不会删除现有报名；数据库、`.env`、日志、备份没有进入 Git。
 
@@ -461,7 +476,7 @@ COOKIE_SECURE=false
 | 409 | `DUPLICATE_REGISTRATION` | 同一比赛邮箱已报名 |
 | 409 | `REGISTRATION_CLOSED` | 比赛已发布但报名截止时间已过；草稿、下架或不存在的比赛按 404 处理 |
 | 413 | `PAYLOAD_TOO_LARGE` | 请求体超过大小限制 |
-| 429 | `RATE_LIMITED` | 登录等敏感操作请求过于频繁 |
+| 429 | `RATE_LIMITED` | 登录或公开报名请求超过限额；公开报名响应包含 `Retry-After` |
 | 500 | `INTERNAL_ERROR` | 未预期服务端错误 |
 | 503 | `SERVICE_UNAVAILABLE` | 健康检查发现服务依赖不可用 |
 

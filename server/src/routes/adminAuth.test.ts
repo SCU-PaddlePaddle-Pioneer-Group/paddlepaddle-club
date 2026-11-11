@@ -13,7 +13,10 @@ import { applyMigrations } from '../db/migrate.js'
 const sessionSecret = 'test-only-session-secret-that-is-long-enough'
 const allowedOrigin = 'http://localhost:3000'
 
-async function createTestApi() {
+async function createTestApi(options: {
+  cookieSecure?: boolean
+  trustedProxyAddresses?: string[]
+} = {}) {
   const database = openDatabase(':memory:')
   applyMigrations(database)
   database
@@ -27,7 +30,11 @@ async function createTestApi() {
       new Date().toISOString(),
     )
 
-  const server = createApp(database, { sessionSecret }).listen(0, '127.0.0.1')
+  const server = createApp(database, {
+    sessionSecret,
+    cookieSecure: options.cookieSecure,
+    trustedProxyAddresses: options.trustedProxyAddresses,
+  }).listen(0, '127.0.0.1')
   await once(server, 'listening')
   const address = server.address() as AddressInfo
 
@@ -253,6 +260,245 @@ test('login failures are rate limited and credential errors are generic', async 
     assert.equal(response?.status, 429)
     const result = (await response?.json()) as { error: { code: string } }
     assert.equal(result.error.code, 'RATE_LIMITED')
+  } finally {
+    await api.close()
+  }
+})
+
+test('trusted HTTPS proxy sets a secure session cookie and isolates login limits', async () => {
+  const api = await createTestApi({
+    cookieSecure: true,
+    trustedProxyAddresses: ['127.0.0.1'],
+  })
+  try {
+    const login = (clientAddress: string, password: string) =>
+      fetch(`${api.baseUrl}/api/admin/login`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          origin: allowedOrigin,
+          'x-forwarded-for': clientAddress,
+          'x-forwarded-proto': 'https',
+        },
+        body: JSON.stringify({ username: 'test-admin', password }),
+      })
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const failedLogin = await login('198.51.100.10', 'wrong-password')
+      assert.equal(failedLogin.status, 401)
+    }
+
+    const loginFromOtherClient = await login(
+      '198.51.100.11',
+      'test-password-123',
+    )
+    assert.equal(loginFromOtherClient.status, 200)
+    const setCookie = loginFromOtherClient.headers.get('set-cookie')
+    assert.ok(setCookie?.startsWith('club.sid='))
+    assert.ok(setCookie?.includes('Secure'))
+    assert.ok(setCookie?.includes('HttpOnly'))
+
+    const cookie = sessionCookie(loginFromOtherClient)
+    const me = await fetch(`${api.baseUrl}/api/admin/me`, {
+      headers: {
+        cookie,
+        'x-forwarded-for': '198.51.100.11',
+        'x-forwarded-proto': 'https',
+      },
+    })
+    assert.equal(me.status, 200)
+    assert.equal(apiResponseUsername(await me.json()), 'test-admin')
+  } finally {
+    await api.close()
+  }
+})
+
+test('untrusted forwarding headers cannot spoof client IP or HTTPS', async () => {
+  const api = await createTestApi({ cookieSecure: true })
+  try {
+    const forgedHttpsLogin = await fetch(`${api.baseUrl}/api/admin/login`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        origin: allowedOrigin,
+        'x-forwarded-for': '203.0.113.99',
+        'x-forwarded-proto': 'https',
+      },
+      body: JSON.stringify({
+        username: 'test-admin',
+        password: 'test-password-123',
+      }),
+    })
+    assert.equal(forgedHttpsLogin.status, 200)
+    assert.equal(forgedHttpsLogin.headers.get('set-cookie'), null)
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const failedLogin = await fetch(`${api.baseUrl}/api/admin/login`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          origin: allowedOrigin,
+          'x-forwarded-for': `198.51.100.${attempt + 10}`,
+          'x-forwarded-proto': 'https',
+        },
+        body: JSON.stringify({
+          username: 'test-admin',
+          password: 'wrong-password',
+        }),
+      })
+      assert.equal(failedLogin.status, 401)
+      assert.equal(failedLogin.headers.get('set-cookie'), null)
+    }
+
+    const forgedClientLogin = await fetch(`${api.baseUrl}/api/admin/login`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        origin: allowedOrigin,
+        'x-forwarded-for': '203.0.113.99',
+        'x-forwarded-proto': 'https',
+      },
+      body: JSON.stringify({
+        username: 'test-admin',
+        password: 'test-password-123',
+      }),
+    })
+    assert.equal(forgedClientLogin.status, 429)
+    assert.equal(forgedClientLogin.headers.get('set-cookie'), null)
+  } finally {
+    await api.close()
+  }
+})
+
+test('revoked admins lose existing sessions on all management routes', async () => {
+  const api = await createTestApi()
+  try {
+    api.database
+      .prepare(
+        `INSERT INTO competitions
+          (id, title, summary, rules, registration_deadline, status, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, 'published', ?, ?)`,
+      )
+      .run(
+        'revocation-competition',
+        'Revocation test',
+        'Test summary',
+        'Test rules',
+        new Date(Date.now() + 60_000).toISOString(),
+        new Date().toISOString(),
+        new Date().toISOString(),
+      )
+    api.database
+      .prepare(
+        `INSERT INTO registrations (id, competition_id, name, email, created_at)
+         VALUES (?, ?, ?, ?, ?)`,
+      )
+      .run(
+        'revocation-registration',
+        'revocation-competition',
+        'Test attendee',
+        'revocation@example.edu',
+        new Date().toISOString(),
+      )
+
+    const login = async () => {
+      const response = await fetch(`${api.baseUrl}/api/admin/login`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          origin: allowedOrigin,
+        },
+        body: JSON.stringify({
+          username: 'test-admin',
+          password: 'test-password-123',
+        }),
+      })
+      assert.equal(response.status, 200)
+      return sessionCookie(response)
+    }
+
+    const cookies = await Promise.all(
+      Array.from({ length: 5 }, () => login()),
+    )
+    assert.equal(
+      api.database.prepare('SELECT COUNT(*) AS count FROM sessions').get()?.count,
+      5,
+    )
+    api.database.prepare('DELETE FROM admins WHERE id = ?').run('admin-1')
+
+    const requests: Array<{
+      path: string
+      cookie: string
+      method?: string
+      headers?: Record<string, string>
+      body?: string
+    }> = [
+      { path: '/api/admin/me', cookie: cookies[0] },
+      { path: '/api/admin/competitions', cookie: cookies[1] },
+      {
+        path: '/api/admin/competitions',
+        cookie: cookies[2],
+        method: 'POST',
+        headers: {
+          origin: allowedOrigin,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: 'Must not be created',
+          summary: 'Test summary',
+          rules: 'Test rules',
+          registrationDeadline: new Date(Date.now() + 60_000).toISOString(),
+        }),
+      },
+      {
+        path: '/api/admin/competitions/revocation-competition/registrations',
+        cookie: cookies[3],
+      },
+      {
+        path: '/api/admin/registrations/revocation-registration',
+        cookie: cookies[4],
+        method: 'PATCH',
+        headers: {
+          origin: allowedOrigin,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'confirmed' }),
+      },
+    ]
+
+    for (const request of requests) {
+      const response = await fetch(`${api.baseUrl}${request.path}`, {
+        method: request.method,
+        headers: { cookie: request.cookie, ...request.headers },
+        body: request.body,
+      })
+      assert.equal(response.status, 401, request.path)
+      assert.equal(
+        ((await response.json()) as { error: { code: string } }).error.code,
+        'UNAUTHENTICATED',
+      )
+      assert.ok(response.headers.get('set-cookie')?.startsWith('club.sid=;'))
+    }
+
+    assert.equal(
+      api.database.prepare('SELECT COUNT(*) AS count FROM sessions').get()?.count,
+      0,
+    )
+    assert.equal(
+      api.database.prepare('SELECT COUNT(*) AS count FROM competitions').get()?.count,
+      1,
+    )
+    assert.equal(
+      api.database
+        .prepare('SELECT status FROM registrations WHERE id = ?')
+        .get('revocation-registration')?.status,
+      'pending',
+    )
+    const staleSessionReuse = await fetch(
+      `${api.baseUrl}/api/admin/me`,
+      { headers: { cookie: cookies[0] } },
+    )
+    assert.equal(staleSessionReuse.status, 401)
   } finally {
     await api.close()
   }
