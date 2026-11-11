@@ -25,7 +25,7 @@
 - `ModulePending` 只是占位，不是认证或报名实现；接入真实页面后删除不再使用的占位引用。
 - A 的 `src/lib/competition-preview.ts` 复用 B 的 `getCompetitions` 校验与公共请求工具，不另建请求系统。
 - 公开赛事列表返回 `{ items: [...] }`，详情和报名返回 `{ item: ... }`，id 为非空字符串。后台只返回 published 数据，按 createdAt DESC、id ASC 排序；首页保留顺序取前 3 条。
-- 已交付的 `docs/api.md` 为 B/C 接口契约，旧 data 草案已废弃；变更同步 A/B/C/D。赛事正式路由已接入，管理路由仍待 D 的真实认证和接口交付。
+- 已交付的 `docs/api.md` 为 B/C 接口契约，旧 data 草案已废弃；变更同步 A/B/C/D。赛事及登录、比赛管理路由已接入，管理页由 A 的 `AdminAccess` 统一预检和退出；D 的页面失效事件仍有效。报名管理 D5 尚待真实接口交付，保留登录保护的占位。
 
 ## 实现和验证
 
