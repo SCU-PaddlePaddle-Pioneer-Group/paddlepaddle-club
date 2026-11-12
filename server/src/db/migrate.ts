@@ -9,6 +9,23 @@ const migrationsDirectory = resolve(
   '../../migrations',
 )
 
+function rawChecksum(sql: string): string {
+  return createHash('sha256').update(sql).digest('hex')
+}
+
+function checksum(sql: string): string {
+  return rawChecksum(sql.replace(/\r\n?/g, '\n'))
+}
+
+function migrationChecksums(sql: string): Set<string> {
+  const normalizedSql = sql.replace(/\r\n?/g, '\n')
+  return new Set([
+    rawChecksum(sql),
+    checksum(normalizedSql),
+    rawChecksum(normalizedSql.replace(/\n/g, '\r\n')),
+  ])
+}
+
 export function applyMigrations(database: DatabaseSync): void {
   database.exec(`
     CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -31,11 +48,12 @@ export function applyMigrations(database: DatabaseSync): void {
 
   for (const name of migrationFiles) {
     const sql = readFileSync(resolve(migrationsDirectory, name), 'utf8')
-    const checksum = createHash('sha256').update(sql).digest('hex')
+    const checksums = migrationChecksums(sql)
+    const canonicalChecksum = checksum(sql)
     const previousChecksum = appliedMigrations.get(name)
 
     if (previousChecksum !== undefined) {
-      if (previousChecksum !== checksum) {
+      if (!checksums.has(previousChecksum)) {
         throw new Error(`已应用的数据库迁移文件被修改：${name}`)
       }
       continue
@@ -48,7 +66,7 @@ export function applyMigrations(database: DatabaseSync): void {
         .prepare(
           'INSERT INTO schema_migrations (name, checksum, applied_at) VALUES (?, ?, ?)',
         )
-        .run(name, checksum, new Date().toISOString())
+        .run(name, canonicalChecksum, new Date().toISOString())
       database.exec('COMMIT;')
       console.log(`Applied database migration: ${name}`)
     } catch (error) {
