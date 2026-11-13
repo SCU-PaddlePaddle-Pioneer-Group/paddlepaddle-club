@@ -65,7 +65,7 @@ proxy_set_header X-Forwarded-Proto $scheme;
 proxy_set_header X-Forwarded-Host $host;
 ```
 
-HTTPS 反向代理部署应设置 `COOKIE_SECURE=true` 并配置准确的 `TRUSTED_PROXY_ADDRESSES`；本地 HTTP 开发保持 `COOKIE_SECURE=false` 且可信代理列表留空。管理写请求必须携带允许来源的 `Origin`，允许列表默认为 Vite 开发源 `http://localhost:3000,http://127.0.0.1:3000`，部署时须显式设置 `ALLOWED_ORIGINS`。迁移文件位于 `server/migrations/`；已应用迁移会校验 SHA-256，不能原地修改，后续变更应添加新迁移。迁移操作不清空已有业务数据。
+HTTPS 反向代理部署应设置 `COOKIE_SECURE=true` 并配置准确的 `TRUSTED_PROXY_ADDRESSES`；本地 HTTP 开发保持 `COOKIE_SECURE=false` 且可信代理列表留空。管理写请求必须携带允许来源的 `Origin`，允许列表默认为 Vite 开发源 `http://localhost:3000,http://127.0.0.1:3000`，部署时须显式设置 `ALLOWED_ORIGINS`。迁移文件位于 `server/migrations/`；校验 SHA-256 时会统一换行符，因此 LF/CRLF 差异不会阻止打开既有数据库，但 SQL 内容变更仍会报错。已应用的迁移不可修改，后续变更应添加新迁移。迁移操作不清空已有业务数据。
 
 SQLite 使用 Node.js 内置的 `node:sqlite`，不需要单独安装或注册数据库平台；运行环境要求 Node.js 22.13 或更新版本。数据库文件、WAL 文件和备份不应提交到 Git，`server/data/` 已加入忽略规则。管理员会话存于同一 SQLite 文件，8 小时过期。
 

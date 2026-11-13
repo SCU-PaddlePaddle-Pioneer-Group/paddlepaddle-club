@@ -1,11 +1,22 @@
 import assert from 'node:assert/strict'
+import { createHash, randomUUID } from 'node:crypto'
 import { mkdtempSync, rmSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
+import { dirname, join, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
-import { randomUUID } from 'node:crypto'
+import { fileURLToPath } from 'node:url'
 import test from 'node:test'
 import { openDatabase } from './database.js'
 import { applyMigrations } from './migrate.js'
+
+const initialMigrationPath = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  '../../migrations/001_initial.sql',
+)
+
+function sha256(value: string): string {
+  return createHash('sha256').update(value).digest('hex')
+}
 
 test('rerunning migrations preserves existing records', () => {
   const database = openDatabase(':memory:')
@@ -40,6 +51,38 @@ test('rerunning migrations preserves existing records', () => {
         .prepare('SELECT COUNT(*) AS count FROM schema_migrations')
         .get()?.count,
       2,
+    )
+  } finally {
+    database.close()
+  }
+})
+
+test('migration checksum ignores line ending differences but rejects SQL changes', () => {
+  const database = openDatabase(':memory:')
+
+  try {
+    applyMigrations(database)
+
+    const migrationSql = readFileSync(initialMigrationPath, 'utf8')
+    const windowsLineEndingChecksum = sha256(
+      migrationSql.replace(/\r\n?/g, '\n').replace(/\n/g, '\r\n'),
+    )
+    database
+      .prepare('UPDATE schema_migrations SET checksum = ? WHERE name = ?')
+      .run(windowsLineEndingChecksum, '001_initial.sql')
+
+    assert.doesNotThrow(() => applyMigrations(database))
+
+    const changedMigrationChecksum = sha256(
+      migrationSql.replace('CREATE TABLE admins', 'CREATE TABLE changed_admins'),
+    )
+    database
+      .prepare('UPDATE schema_migrations SET checksum = ? WHERE name = ?')
+      .run(changedMigrationChecksum, '001_initial.sql')
+
+    assert.throws(
+      () => applyMigrations(database),
+      /已应用的数据库迁移文件被修改：001_initial\.sql/,
     )
   } finally {
     database.close()
